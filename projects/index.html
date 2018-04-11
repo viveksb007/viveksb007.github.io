@@ -1,0 +1,21 @@
+---
+layout: page
+title: Projects
+---
+
+<ul class="posts" style="list-style-type: none;padding: 0; margin: 0;">
+{% for project in site.data.projects %}
+    <li>
+        {% if project.url %}
+            {% if project.url contains "https://" %}
+                <h2><a href="{{ project.url }}" target="_blank">{{ project.name }}</a></h2>
+            {% else %}
+                <h3><a href="{{ project.url | prepend: site.baseurl }}">{{ project.name }}</a></h3>
+            {% endif %}
+        {% else %}
+            <h2>{{ project.name }}</h2>
+        {% endif %}
+        <p>{{ project.descr | markdownify }}</p>
+    </li>
+{% endfor %}
+</ul>

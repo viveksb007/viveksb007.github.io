@@ -1,0 +1,264 @@
+
+  
+
+
+
+
+
+
+
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>viveksb007</title>
+  <meta name="theme-color" content="#222222" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="/assets/logo-black.PNG">
+  <script src="/assets/js/jquery.min.js"></script>
+  <script src="/assets/js/bootstrap.min.js"></script>
+  <script src="/assets/js/header.js"></script>
+  <script src="/assets/js/toc.js"></script>
+  <script src="/assets/js/processing.min.js"></script>
+  <link href="/assets/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/assets/css/theme.css" rel="stylesheet">
+  <link href="/assets/css/syntax.css" rel="stylesheet">
+  <link href="/assets/css/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+</head>
+
+<body>
+
+  
+
+  
+
+
+ <script type="text/javascript">
+  WebFontConfig = {
+    google: {
+      families: ['Ubuntu::latin']
+    }
+  };
+  (function() {
+    var wf = document.createElement('script');
+    wf.src = ('https:' == document.location.protocol ? 'https' : 'http') +
+      '://ajax.googleapis.com/ajax/libs/webfont/1/webfont.js';
+    wf.type = 'text/javascript';
+    wf.async = 'true';
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(wf, s);
+  })();
+</script>
+
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="/">viveksb007</a>
+      </div>
+      <div class="collapse navbar-collapse">
+        <ul class="nav navbar-nav">
+          <li><a href="/">/home</a></li>
+          <li><a href="/projects">/projects</a></li>
+          <li><a href="/archive.html">/archive</a></li>
+          <li><a href="/tags.html">/tags</a></li>
+          <li><a href="/about.html">/about</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+
+    <div class="wrapper">
+      <div class="content">
+        <div class="container container-center">
+          <div class="row">
+            <div class="col-md-8">
+              <div class="well">
+                
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nb">echo</span> <span class="s1">'---\nlayout: tag_index\ntag: processing \n---'</span> &gt; <span class="s1">'processing.md'</span> &amp;
+<span class="nb">echo</span> <span class="s1">'---\nlayout: tag_index\ntag: qualcomm \n---'</span> &gt; <span class="s1">'qualcomm.md'</span> &amp;
+<span class="nb">echo</span> <span class="s1">'---\nlayout: tag_index\ntag: project \n---'</span> &gt; <span class="s1">'project.md'</span> &amp;
+<span class="nb">echo</span> <span class="s1">'---\nlayout: tag_index\ntag: self-driving \n---'</span> &gt; <span class="s1">'self-driving.md'</span> &amp;
+<span class="nb">echo</span> <span class="s1">'---\nlayout: tag_index\ntag: flash-ROM \n---'</span> &gt; <span class="s1">'flash-ROM.md'</span> &amp;
+<span class="nb">echo</span> <span class="s1">'---\nlayout: tag_index\ntag: bootloop \n---'</span> &gt; <span class="s1">'bootloop.md'</span> &amp;
+<span class="nb">echo</span> <span class="s1">'---\nlayout: tag_index\ntag: MIUI ROM \n---'</span> &gt; <span class="s1">'MIUI ROM.md'</span> &amp;
+<span class="nb">echo</span> <span class="s1">'---\nlayout: tag_index\ntag: gsoc \n---'</span> &gt; <span class="s1">'gsoc.md'</span> &amp;
+<span class="nb">echo</span> <span class="s1">'---\nlayout: tag_index\ntag: pslab \n---'</span> &gt; <span class="s1">'pslab.md'</span> &amp;
+<span class="nb">echo</span> <span class="s1">'---\nlayout: tag_index\ntag: android \n---'</span> &gt; <span class="s1">'android.md'</span> &amp;
+<span class="nb">echo</span> <span class="s1">'---\nlayout: tag_index\ntag: fossasia \n---'</span> &gt; <span class="s1">'fossasia.md'</span> &amp;
+<span class="nb">echo</span> <span class="s1">'---\nlayout: tag_index\ntag: snapchat \n---'</span> &gt; <span class="s1">'snapchat.md'</span> &amp;
+<span class="nb">echo</span> <span class="s1">'---\nlayout: tag_index\ntag: snap screenshot \n---'</span> &gt; <span class="s1">'snap screenshot.md'</span> &amp;
+<span class="nb">echo</span> <span class="s1">'---\nlayout: tag_index\ntag: automate-filtering \n---'</span> &gt; <span class="s1">'automate-filtering.md'</span> &amp;
+<span class="nb">echo</span> <span class="s1">'---\nlayout: tag_index\ntag: video-editing \n---'</span> &gt; <span class="s1">'video-editing.md'</span> &amp;
+<span class="nb">echo</span> <span class="s1">'---\nlayout: tag_index\ntag: ffmpeg-commands \n---'</span> &gt; <span class="s1">'ffmpeg-commands.md'</span> &amp;
+<span class="nb">echo</span> <span class="s1">'---\nlayout: tag_index\ntag: flask \n---'</span> &gt; <span class="s1">'flask.md'</span> &amp;
+<span class="nb">echo</span> <span class="s1">'---\nlayout: tag_index\ntag: uploading \n---'</span> &gt; <span class="s1">'uploading.md'</span> &amp;
+<span class="nb">echo</span> <span class="s1">'---\nlayout: tag_index\ntag: downloading \n---'</span> &gt; <span class="s1">'downloading.md'</span> &amp;</code></pre></figure>
+
+
+              </div>
+            </div>
+            <div class="col-md-4 hidden-xs">
+              <div class="sidebar ">
+  <h2>Recent Posts</h2>
+  <ul>
+    
+    <li><a href="/2018/04/uploading-processing-downloading-files-in-flask">Uploading, Processing and Downloading Files in Flask</a></li>
+    
+    <li><a href="/2017/12/ffmpeg-automate-filtering-and-editing-videos">FFmpeg : Automate Filtering and Editing Videos</a></li>
+    
+    <li><a href="/2017/11/how-snapchat-detects-screenshot">How Snapchat detects when screenshot is taken (Hypothesis)</a></li>
+    
+    <li><a href="/2017/10/gsoc-2017-pslab-fossasia">GSOC - 17 Pocket Science Lab : FOSSASIA</a></li>
+    
+    <li><a href="/2017/09/flash-fastboot-miui-rom-from-linux">Flash Fastboot MIUI ROM from Linux</a></li>
+    
+  </ul>
+</div>
+
+<div class="sidebar">
+  <h2>Tags</h2>
+  <ul class="sideBarTags">
+    
+    
+    <li>
+      <a href="/tag/MIUI ROM" data-toggle="tooltip" data-placement="right" title="1">
+        <span>MIUI ROM</span></a></li>
+    
+    <li>
+      <a href="/tag/android" data-toggle="tooltip" data-placement="right" title="1">
+        <span>android</span></a></li>
+    
+    <li>
+      <a href="/tag/automate-filtering" data-toggle="tooltip" data-placement="right" title="1">
+        <span>automate-filtering</span></a></li>
+    
+    <li>
+      <a href="/tag/bootloop" data-toggle="tooltip" data-placement="right" title="1">
+        <span>bootloop</span></a></li>
+    
+    <li>
+      <a href="/tag/downloading" data-toggle="tooltip" data-placement="right" title="1">
+        <span>downloading</span></a></li>
+    
+    <li>
+      <a href="/tag/ffmpeg-commands" data-toggle="tooltip" data-placement="right" title="1">
+        <span>ffmpeg-commands</span></a></li>
+    
+    <li>
+      <a href="/tag/flash-ROM" data-toggle="tooltip" data-placement="right" title="1">
+        <span>flash-ROM</span></a></li>
+    
+    <li>
+      <a href="/tag/flask" data-toggle="tooltip" data-placement="right" title="1">
+        <span>flask</span></a></li>
+    
+    <li>
+      <a href="/tag/fossasia" data-toggle="tooltip" data-placement="right" title="1">
+        <span>fossasia</span></a></li>
+    
+    <li>
+      <a href="/tag/gsoc" data-toggle="tooltip" data-placement="right" title="1">
+        <span>gsoc</span></a></li>
+    
+    <li>
+      <a href="/tag/processing" data-toggle="tooltip" data-placement="right" title="1">
+        <span>processing</span></a></li>
+    
+    <li>
+      <a href="/tag/project" data-toggle="tooltip" data-placement="right" title="1">
+        <span>project</span></a></li>
+    
+    <li>
+      <a href="/tag/pslab" data-toggle="tooltip" data-placement="right" title="1">
+        <span>pslab</span></a></li>
+    
+    <li>
+      <a href="/tag/qualcomm" data-toggle="tooltip" data-placement="right" title="1">
+        <span>qualcomm</span></a></li>
+    
+    <li>
+      <a href="/tag/self-driving" data-toggle="tooltip" data-placement="right" title="1">
+        <span>self-driving</span></a></li>
+    
+    <li>
+      <a href="/tag/snap screenshot" data-toggle="tooltip" data-placement="right" title="1">
+        <span>snap screenshot</span></a></li>
+    
+    <li>
+      <a href="/tag/snapchat" data-toggle="tooltip" data-placement="right" title="1">
+        <span>snapchat</span></a></li>
+    
+    <li>
+      <a href="/tag/uploading" data-toggle="tooltip" data-placement="right" title="1">
+        <span>uploading</span></a></li>
+    
+    <li>
+      <a href="/tag/video-editing" data-toggle="tooltip" data-placement="right" title="1">
+        <span>video-editing</span></a></li>
+    
+  </ul>
+</div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+          <footer class="footer-distributed">
+      <div class="container">
+        <div class="footer">
+          <p>Vivek Singh Bhadauria</p>
+          <ul class="social-media">
+
+  
+    <li>
+      <a title="viveksb007 on Github" href="https://github.com/viveksb007" target="_blank"><i class="fa fa-github fa-2x"></i></a>
+    </li>
+  
+
+  
+
+  
+    <li>
+      <a title="viveksb007 on LinkedIn" href="https://www.linkedin.com/in/viveksb007" target="_blank"><i class="fa fa-linkedin fa-2x"></i></a>
+    </li>
+  
+
+  
+        <li>
+            <a href="mailto:">
+                <i class="fa fa-envelope fa-2x"></i>
+            </a>
+        </li>
+  
+
+  
+  <li>
+    <a title="UCu14rW9exAAl-oaFDsDCKKg on YouTube" href="https://youtube.com/channel/UCu14rW9exAAl-oaFDsDCKKg" target="_blank"><i class="fa fa-youtube fa-2x"></i></a>
+  </li>
+  
+
+  
+
+  
+
+  
+    <li>
+      <a title="feed.xml RSS" href="feed.xml" target="_blank"><i class="fa fa-rss fa-2x"></i></a>
+    </li>
+  
+
+</ul>
+
+        </div>
+      </div>
+    </footer>
+
+    </div>
+  </body>
+</html>

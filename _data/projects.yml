@@ -1,0 +1,35 @@
+- name: LiveFeed
+  url: https://github.com/viveksb007/LiveFeed
+  descr: Transfers real-time camera feed from android phone to desktop, python script runs on desktop which receives and renders camera frames.
+
+- name: Advanced Attendance System
+  url: https://github.com/viveksb007/AttendanceClient
+  descr: App on teacher’s mobile acts as attendance server and app on student’s mobile acts as attendance client, communication between client and server is over wi-fi hotspot opened by server app.
+
+- name: AnimeDownloader
+  url: https://github.com/viveksb007/AnimeDownloader
+  descr: Made a Chrome Extension and Android App to download anime from a website by injecting JavaScript on loaded webpage and obtaining required links.
+
+- name: 3D Pen
+  url: https://github.com/viveksb007/3D-Pen
+  descr: Renders tip of pen continuously using Processing sketch (Used MPU6050 and Arduino Nano)
+
+- name:  AndroidTerminal
+  url:   https://github.com/viveksb007/AndroidTerminal
+  descr: You can control any device`s terminal Laptop,RasPi,etc capable of running Python from your Android Smartphone. App on Android Device and Python script on target device. Project uses Firebase for exchange of command and response of terminal. Python Script executes command through subprocess module and sends the response to android app
+
+- name:  TicTacToe Android
+  url:   https://github.com/viveksb007/TicTacToe2.0
+  descr: Added A.I (Computer Player) to enable single person to play.
+
+- name:  PythonScripts
+  url: https://github.com/viveksb007/PythonScripts
+  descr: Python scripts to automate various tasks. Example <a href="https://github.com/viveksb007/PythonScripts/blob/master/TorrentScrape.py">TorrentScrape</a>, <a href="https://github.com/viveksb007/PythonScripts/blob/master/vivtestBot.py">TelegramBot</a>, etc
+
+- name:  Image Processing GUI Client
+  url:   https://github.com/viveksb007/Img_proc_GUI
+  descr: Uses OpenCV for Image Processing and PyQt5 for GUI. Tested with Python 3
+
+- name:  Games in C++ by Using Graphics Library
+  url: https://github.com/viveksb007/schoolProjects
+  descr: <a href="https://github.com/viveksb007/schoolProjects/blob/master/PRARDONE.CPP">Paratron</a> Idea Based on Original Game Paratrooper<br><a href="https://github.com/viveksb007/schoolProjects/blob/master/SPACE.CPP">Space Invader</a> Arcade game Space Invader<br><a href="https://github.com/viveksb007/schoolProjects/blob/master/YAM.CPP">Rapid Roll</a> Classic Game

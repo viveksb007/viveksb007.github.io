@@ -1,0 +1,504 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+	<channel>
+		<title>viveksb007</title>
+		<description>Electronics Engineer and Software Developer</description>
+		<link></link>
+		<atom:link href="/feed.xml" rel="self" type="application/rss+xml" />
+		
+			<item>
+				<title>Uploading, Processing and Downloading Files in Flask</title>
+				<description>&lt;p&gt;In this article, we are going to learn how to handle files from server i.e how to facilitate uploading and download for files in Flask. This is quite a common requirement for webapps nowadays. Some examples are :&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;All the image editing sites online require uploading of image, then process them online and provide processed image for downloading.&lt;/li&gt;
+  &lt;li&gt;Sites that allow users to edit pdf online require uploading, processing and allowing users to download processed file.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;There are many examples of using this functionality. So in this post we will see :&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;How to provide interface to user for uploading a file&lt;/li&gt;
+  &lt;li&gt;Process file on server side&lt;/li&gt;
+  &lt;li&gt;Allow user to download processes file&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;We will be creating back-end to remove watermark from pdf files. For that we need to get user file, process (remove watermark from pdf file) and provide processed file to user for download.&lt;/p&gt;
+
+&lt;h3 id=&quot;interface-for-uploading-a-file&quot;&gt;Interface for Uploading a File&lt;/h3&gt;
+&lt;p&gt;We will create a simple HTML page that provides a button to select file and another button to upload that file. Let the HTML page be &lt;strong&gt;&lt;em&gt;index.html&lt;/em&gt;&lt;/strong&gt;&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;cp&quot;&gt;&amp;lt;!DOCTYPE html&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;html&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;lang=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;en&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;head&amp;gt;&lt;/span&gt;
+   &lt;span class=&quot;nt&quot;&gt;&amp;lt;meta&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;charset=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;UTF-8&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+   &lt;span class=&quot;nt&quot;&gt;&amp;lt;title&amp;gt;&lt;/span&gt;Watermark Remover&lt;span class=&quot;nt&quot;&gt;&amp;lt;/title&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;/head&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;body&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;align=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;center&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+   &lt;span class=&quot;nt&quot;&gt;&amp;lt;h1&amp;gt;&lt;/span&gt;Cam-Scanner Watermark Remover&lt;span class=&quot;nt&quot;&gt;&amp;lt;/h1&amp;gt;&lt;/span&gt;
+   &lt;span class=&quot;nt&quot;&gt;&amp;lt;h2&amp;gt;&lt;/span&gt;Upload new File&lt;span class=&quot;nt&quot;&gt;&amp;lt;/h2&amp;gt;&lt;/span&gt;
+   &lt;span class=&quot;nt&quot;&gt;&amp;lt;form&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;method=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;post&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;enctype=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;multipart/form-data&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+       &lt;span class=&quot;nt&quot;&gt;&amp;lt;p&amp;gt;&amp;lt;input&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;type=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;file&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+           &lt;span class=&quot;nt&quot;&gt;&amp;lt;input&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;type=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;submit&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;value=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;Upload&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+   &lt;span class=&quot;nt&quot;&gt;&amp;lt;/form&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;/body&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;/html&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;&lt;strong&gt;form&lt;/strong&gt; tag is used to create a POST request.&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;method&lt;/strong&gt; attribute of form tag specifies the HTTP method to use when form is submitted.
+    &lt;ul&gt;
+      &lt;li&gt;&lt;strong&gt;get:&lt;/strong&gt; form data is appended to the URL when submitted&lt;/li&gt;
+      &lt;li&gt;&lt;strong&gt;post:&lt;/strong&gt; form data is not appended to the URL&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;enctype:&lt;/strong&gt; specifies the encoding type of the form. application/x-www-form-urlencoded is the default value if the enctype is not specified. multipart/form-data is necessary if users want to upload a file through the form.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/img/watermark_remover_screenshot.png&quot; alt=&quot;Camscanner Watermark Remover&quot; style=&quot;display: block; margin-left: auto; margin-right: auto;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Now we render this page as the main page i.e index page. We need to specify a directory to the Flask app where the uploaded files would be stored.&lt;/p&gt;
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;UPLOAD_FOLDER&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;os&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dirname&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;os&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;abspath&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__file__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;'/uploads/'&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;Above line creates a &lt;strong&gt;uploads&lt;/strong&gt; folder in the same directory where the src code of the site is stored.&lt;/p&gt;
+
+&lt;p&gt;We should also check for file extension that the user is uploading as there would be some specific type of file that the site can process. Also there is security issue if the user can upload any type of file. User might upload html file that can cause &lt;strong&gt;XSS (cross site-scripting)&lt;/strong&gt; problems.&lt;/p&gt;
+
+&lt;p&gt;For this post, we only need pdf file extensions as this Flask app would remove watermark from pdf files created by &lt;a href=&quot;https://play.google.com/store/apps/details?id=com.intsig.camscanner&amp;amp;hl=en&quot;&gt;&lt;strong&gt;CamScanner App&lt;/strong&gt;&lt;/a&gt; (Famous App for scanning documents through Mobile Camera). Pdf files would have watermark at the bottom similar to what is shown in the image below :&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/img/watermark_screenshot.png&quot; alt=&quot;Camscanner Watermark Screenshot&quot; style=&quot;display: block; margin-left: auto; margin-right: auto;&quot; /&gt;&lt;/p&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;ALLOWED_EXTENSIONS&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'pdf'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;allowed_file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;filename&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;  &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;'.'&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;filename&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;and&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;filename&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rsplit&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'.'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;lower&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ALLOWED_EXTENSIONS&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;&lt;strong&gt;filename&lt;/strong&gt; is passed as an argument to &lt;strong&gt;allowed_file&lt;/strong&gt; function. Function checks the filename for allowed file extension and if file type is supported the function returns &lt;strong&gt;True&lt;/strong&gt; otherwise it returns &lt;strong&gt;False&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p&gt;We can add more extension types in allowed extensions set for supporting different type of file uploads.&lt;/p&gt;
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kn&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;flask&lt;/span&gt; &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Flask&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;request&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;redirect&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;url_for&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;render_template&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;send_from_directory&lt;/span&gt;
+&lt;span class=&quot;kn&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;werkzeug.utils&lt;/span&gt; &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;secure_filename&lt;/span&gt;
+
+&lt;span class=&quot;nd&quot;&gt;@app.route&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'/'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;methods&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'GET'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;'POST'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;])&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;index&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;():&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;  &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;request&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;method&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;'POST'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;      &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;'file'&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;not&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;request&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;files&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;          &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'No file attached in request'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;          &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;redirect&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;request&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;url&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;      &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;request&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;files&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'file'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;      &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;filename&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;''&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;          &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'No file selected'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;          &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;redirect&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;request&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;url&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;      &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;and&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;allowed_file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;filename&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;          &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;filename&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;secure_filename&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;filename&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;          &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;save&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;os&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;join&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;app&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;config&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'UPLOAD_FOLDER'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;filename&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;          &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;process_file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;os&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;join&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;app&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;config&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'UPLOAD_FOLDER'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;filename&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;filename&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;          &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;redirect&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;url_for&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'uploaded_file'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;filename&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;filename&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;  &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;render_template&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'index.html'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;In the above method, it can be clearly seen that the &lt;strong&gt;index&lt;/strong&gt; method supports both &lt;strong&gt;GET&lt;/strong&gt; and &lt;strong&gt;POST&lt;/strong&gt; requests. It returns the &lt;strong&gt;index.html&lt;/strong&gt; page when the browser sends a GET request and saves the uploaded file, processes it and returns processed file when POST request is made.&lt;/p&gt;
+
+&lt;p&gt;Uploaded file attached in the POST request can be referenced by &lt;strong&gt;request.files[‘file’]&lt;/strong&gt;. This file needs to be saved in the &lt;strong&gt;UPLOAD_FOLDER&lt;/strong&gt; path that we created earlier. We check the name of the uploaded file before we save it to server filesystem.&lt;br /&gt;&lt;br /&gt;
+Note that we used &lt;strong&gt;secure_filename&lt;/strong&gt; function to obtain filename which we use to store file in the server filesystem. This is done because there is a possibility that user might name the file which clashes with some system configuration file, In this case if uploaded filename is not changed then system file will be overwritten. This vulnerability can be used by hackers to hack the server. So using &lt;strong&gt;secure_filename&lt;/strong&gt; is always advised.&lt;/p&gt;
+
+&lt;h3 id=&quot;processing-uploaded-file&quot;&gt;Processing Uploaded File&lt;/h3&gt;
+&lt;p&gt;After file is successfully saved in the &lt;strong&gt;UPLOAD_FOLDER&lt;/strong&gt;, we called &lt;strong&gt;process_file&lt;/strong&gt; function and passed the uploaded file path as an argument.&lt;/p&gt;
+
+&lt;p&gt;For this task i.e removing watermark from the pdf file. First we should be able to read pdf file, for that we would use &lt;a href=&quot;https://pythonhosted.org/PyPDF2/&quot;&gt;PyPDF2&lt;/a&gt; module. I simply reduced the height of the page which cuts the watermark from the image. Once height of image is reduced I add the modified pdf page to another pdf which I would expose to user for download. In the function below &lt;strong&gt;remove_watermark&lt;/strong&gt; I am saving the modified/processed pdf in &lt;strong&gt;DOWNLOAD_FOLDER&lt;/strong&gt; directory.&lt;/p&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kn&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;PyPDF2&lt;/span&gt; &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PdfFileReader&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PdfFileWriter&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;DOWNLOAD_FOLDER&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;os&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dirname&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;os&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;abspath&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__file__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;'/downloads/'&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;app&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;config&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'DOWNLOAD_FOLDER'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;DOWNLOAD_FOLDER&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;process_file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;filename&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;  &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;remove_watermark&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;filename&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;remove_watermark&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;filename&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;  &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;input_file&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PdfFileReader&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;'rb'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;  &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;output&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PdfFileWriter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;  &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;page_number&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;range&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;input_file&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;getNumPages&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()):&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;      &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;page&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;input_file&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;getPage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;page_number&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;      &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;page&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mediaBox&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;lowerLeft&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;page&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mediaBox&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;getLowerLeft_x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(),&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;20&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;      &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;output&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;addPage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;page&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;  &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;output_stream&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;app&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;config&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'DOWNLOAD_FOLDER'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;filename&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;'wb'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;  &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;output&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;write&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;output_stream&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;h3 id=&quot;allow-users-to-download-processed-file&quot;&gt;Allow Users to Download Processed File&lt;/h3&gt;
+&lt;p&gt;Once the uploaded file is processed, we send it to user i.e the processed file is downloaded in the client’s browser.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;send_from_directory:&lt;/strong&gt; This function sends a file from a given directory. This is a secure way to quickly expose static files from an upload folder or something similar.&lt;/p&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nd&quot;&gt;@app.route&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'/uploads/&amp;lt;filename&amp;gt;'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;uploaded_file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;filename&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+ &lt;span class=&quot;err&quot;&gt;  &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;send_from_directory&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;app&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;config&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'DOWNLOAD_FOLDER'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;filename&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;as_attachment&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;True&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;&lt;strong&gt;as_attachment = True&lt;/strong&gt; downloads the file as sometimes it might happen that pdf is opened in the browser itself and you have to save it manually. &lt;strong&gt;as_attachement = True&lt;/strong&gt; makes sure that the file is downloaded instead of opening in the browser.&lt;/p&gt;
+
+&lt;p&gt;According to Flask API documentation - set to &lt;strong&gt;True&lt;/strong&gt; if you want to send this file with a &lt;strong&gt;Content-Disposition: attachment&lt;/strong&gt; header.&lt;br /&gt;
+If you haven’t explicitly set a limit to size on file that can be uploaded, Flask would upload file of any size which is generally not that case. Your site would have a limit on file size to process. In our case let’s say we will process pdf file less than or equal to 8mb. We set the limit on &lt;strong&gt;MAX_CONTENT_LENGTH&lt;/strong&gt; config key.&lt;/p&gt;
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;app&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;config&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'MAX_CONTENT_LENGTH'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;8&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1024&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1024&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;Now the Flask app is complete with all the required functionalities i.e it allows users to upload a pdf file, removes watermark from it, saves it in download folder and sends modified file to user’s browser as downloaded file.&lt;/p&gt;
+
+&lt;p&gt;Source Code : &lt;a href=&quot;https://github.com/viveksb007/camscanner_watermark_remover&quot;&gt;https://github.com/viveksb007/camscanner_watermark_remover&lt;/a&gt;&lt;/p&gt;
+
+&lt;div style=&quot;position: relative; width: 100%; height: 0; padding-bottom:51%;&quot;&gt;
+&lt;iframe src=&quot;https://www.youtube.com/embed/tANTbMUk7jc&quot; frameborder=&quot;0&quot; allowfullscreen=&quot;&quot; style=&quot;position: absolute; left: 0; top: 0; width:100%; height:100%;&quot;&gt;&lt;/iframe&gt;
+&lt;/div&gt;
+</description>
+				<pubDate>Sat, 07 Apr 2018 00:00:00 +0530</pubDate>
+				<link>/2018/04/uploading-processing-downloading-files-in-flask</link>
+				<guid isPermaLink="true">/2018/04/uploading-processing-downloading-files-in-flask</guid>
+			</item>
+		
+			<item>
+				<title>FFmpeg : Automate Filtering and Editing Videos</title>
+				<description>&lt;p&gt;Hello again, I am a huge fan of anime, (&lt;strong&gt;Dragon Ball&lt;/strong&gt; and &lt;strong&gt;Naruto&lt;/strong&gt;) in particular. I saw some channels uploading Anime videos bypassing &lt;strong&gt;YouTube’s copyright detection&lt;/strong&gt;. So I looked on the ways and mostly involved some video editing software and you have to invest a lot of your time. So I wanted to automate the process that takes in input as a Video and modifies its properties so that it would bypass YouTube’s Copyright detection and quality of video should still be watchable.&lt;/p&gt;
+
+&lt;p&gt;So lets explore &lt;a href=&quot;https://www.ffmpeg.org/&quot;&gt;&lt;strong&gt;FFmpeg&lt;/strong&gt;&lt;/a&gt; commands first and then we can simply write a bash script to automate the complete process.&lt;/p&gt;
+
+&lt;p&gt;To extract audio from the video -&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;ffmpeg -i inputFile.mp4 outputAudio.mp3&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Add watermark to the video - &lt;strong&gt;watermark.png&lt;/strong&gt; would be overlayed at (x,y) -&amp;gt; (10,10) on the frames of &lt;strong&gt;input.mp4&lt;/strong&gt;&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;ffmpeg -i input.mp4 -i watermark.png -filter_complex &lt;span class=&quot;s2&quot;&gt;&quot;overlay=10:10&quot;&lt;/span&gt; final_video.mp4&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Extract clip from video whose starting time and ending time is specified -&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;ffmpeg -i final_video.mp4 -c copy -ss 00:03:54 -to 00:22:02 output_file.mp4&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Increase Audio speed by 10% - If you have a general audio file and you want to speed up the audio, below command can be used&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;ffmpeg -i testAudio.mp3 -filter:a &lt;span class=&quot;s2&quot;&gt;&quot;atempo=1.1&quot;&lt;/span&gt; -vn audio_final.mp3&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Increase video speed by 10% -&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;ffmpeg -i input.mp4 -filter:v &lt;span class=&quot;s2&quot;&gt;&quot;setpts=0.9*PTS&quot;&lt;/span&gt; output.mp4&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Increase audio and video speed together using complex filtergraph - this is similar to when you speed up the YouTube Videos or increase playback speed in VLC player.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;ffmpeg -i input.mkv -filter_complex &lt;span class=&quot;s2&quot;&gt;&quot;[0:v]setpts=0.5*PTS[v];[0:a]atempo=2.0[a]&quot;&lt;/span&gt; -map &lt;span class=&quot;s2&quot;&gt;&quot;[v]&quot;&lt;/span&gt; -map &lt;span class=&quot;s2&quot;&gt;&quot;[a]&quot;&lt;/span&gt; output.mkv&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;To increase volume by 10dB - you must have seen videos whose sound is quite less even if you are listening on MAX volume, that’s because embedded audio level is low, below command would increase the audio level by 10dB. Change value to 20dB, 30dB and so on depending on how much audio level you want to increase.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;ffmpeg -i inputfile -vcodec copy -af &lt;span class=&quot;s2&quot;&gt;&quot;volume=10dB&quot;&lt;/span&gt; outputfile&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;To decrease volume by 5dB - Similar to increasing audio level, you can also decrease audio level of an independent audio file or audio embedded inside a video.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;ffmpeg -i inputfile -vcodec copy -af &lt;span class=&quot;s2&quot;&gt;&quot;volume=-5dB&quot;&lt;/span&gt; outputfile&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Remove audio from video file - If you want to mute the audio of a video file, you can use the command below to extract a muted video file.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;ffmpeg -i inputFile.mp4 -an -vcodec copy outputFile.mp4&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;I have listed some commands which are used most frequently. To automate the filtering and editing process, we can write a pipeline in which video would be edited in stages. Starting from the input video, output of one level would be input to another level and finally output video is saved. All intermediate files are removed.&lt;/p&gt;
+
+&lt;p&gt;Shell Programming with bash : &lt;a href=&quot;http://matt.might.net/articles/bash-by-example/&quot;&gt;http://matt.might.net/articles/bash-by-example/&lt;/a&gt;&lt;/p&gt;
+
+</description>
+				<pubDate>Fri, 08 Dec 2017 00:00:00 +0530</pubDate>
+				<link>/2017/12/ffmpeg-automate-filtering-and-editing-videos</link>
+				<guid isPermaLink="true">/2017/12/ffmpeg-automate-filtering-and-editing-videos</guid>
+			</item>
+		
+			<item>
+				<title>How Snapchat detects when screenshot is taken (Hypothesis)</title>
+				<description>&lt;p&gt;&lt;img src=&quot;/assets/img/social-lg.jpg&quot; alt=&quot;Snapchat&quot; style=&quot;display: block; margin-left: auto; margin-right: auto;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;While my friend was playing &lt;strong&gt;&lt;em&gt;“That Level Again”&lt;/em&gt;&lt;/strong&gt; game he mentioned there was a level in between when he had to take screenshot of Game Screen to pass that level (Weird right!). As I know a little bit about Mobile Development I thought they might be having some special permission to do so. To be sure I went ahead and asked to see all the permissions that game app was taking and it was just taking &lt;strong&gt;&lt;em&gt;READ_STORAGE_SPACE&lt;/em&gt;&lt;/strong&gt; permission. Then he mentioned that &lt;strong&gt;Snapchat&lt;/strong&gt; also detects when you take screenshot of some other person’s story/chat, it notifies that person that you took a screenshot. That’s violating the rights of a stalker. And you could do that in your App too. Now lets see HOW!&lt;/p&gt;
+
+&lt;p&gt;In layman language, you observe screenshot folder for any file created during the time your app in on foreground. If any image is created in screenshot folder when your app is in foreground that means you app’s screenshot is taken. Below is implementation details of above method in Android.&lt;/p&gt;
+
+&lt;p&gt;So lets see how they might have done it in &lt;strong&gt;code&lt;/strong&gt;. If we have &lt;strong&gt;&lt;em&gt;READ_STORAGE_SPACE&lt;/em&gt;&lt;/strong&gt; permission, we can actually attach a listener to any directory of file-system. And screen-shots in most phones are stored in particular directory (probably change from phone to phone, there is a way to detect that too. I would leave that for you to figure out). So when your App opens attach a listener (In this case &lt;a href=&quot;https://developer.android.com/reference/android/os/FileObserver.html&quot;&gt;FileObserver&lt;/a&gt;) to screen-shot directory and implement its callback methods.&lt;/p&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MyFileObserver&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FileObserver&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+    
+    &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;absolutePath&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
+    
+    &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;MyFileObserver&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;kd&quot;&gt;super&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FileObserver&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;CREATE&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;absolutePath&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;err&quot;&gt; &lt;/span&gt;   &lt;span class=&quot;nd&quot;&gt;@Override&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;onEvent&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// &amp;lt;path&amp;gt; where file or any directory is created&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FileObserver&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;CREATE&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;Log&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;v&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TAG&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Screenshot Taken&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;Create an object of &lt;strong&gt;MyFileObserver&lt;/strong&gt; class by passing path of directory you want to attach listener on and do your action in &lt;strong&gt;&lt;em&gt;onEvent()&lt;/em&gt;&lt;/strong&gt; method.&lt;/p&gt;
+
+&lt;p&gt;Below I am attaching a listener to &lt;strong&gt;Screenshots&lt;/strong&gt; directory, during the time my Activity is on foreground, I am listening to the change in screenshot directory if any new file is created that means screenshot of my app s taken as its on foreground.&lt;/p&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;MyFileObserver&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fileObserver&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MyFileObserver&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getExternalStorageDirectory&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getAbsolutePath&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;/DCIM/Screenshots&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;Call &lt;strong&gt;&lt;em&gt;fileObserver.startWatching()&lt;/em&gt;&lt;/strong&gt; in your Activity &lt;strong&gt;&lt;em&gt;onResume()&lt;/em&gt;&lt;/strong&gt; method and &lt;strong&gt;&lt;em&gt;fileObserver.stopWatching()&lt;/em&gt;&lt;/strong&gt; in Activity &lt;strong&gt;&lt;em&gt;onPause()&lt;/em&gt;&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p&gt;This simple code would detect if any screenshot is taken when your App is on foreground. If you find any discrepancy in this method, please let me know at &lt;strong&gt;viveksbhadauria007@gmail.com&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;I made an Android App &lt;a href=&quot;https://play.google.com/store/apps/details?id=com.viveksb007.snapnscreenshot&quot;&gt;Snap Screenshot for Snapchat&lt;/a&gt; which can take screenshot of Snapchat without detection and takes general screenshots too by simply clicking on a floating camera icon. Please try it and review.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://play.google.com/store/apps/details?id=com.viveksb007.snapnscreenshot&quot; target=&quot;_blank&quot;&gt;
+&lt;img src=&quot;/assets/img/gplay_badge.png&quot; alt=&quot;Google Play Badge&quot; style=&quot;display: block; margin-left: auto; margin-right: auto;&quot; /&gt;
+&lt;/a&gt;&lt;/p&gt;
+</description>
+				<pubDate>Fri, 10 Nov 2017 00:00:00 +0530</pubDate>
+				<link>/2017/11/how-snapchat-detects-screenshot</link>
+				<guid isPermaLink="true">/2017/11/how-snapchat-detects-screenshot</guid>
+			</item>
+		
+			<item>
+				<title>GSOC - 17 Pocket Science Lab : FOSSASIA</title>
+				<description>&lt;p&gt;This is a little late for this post but anyways I drafted it during the GSOC-17 only, so I am posting it with some modification.&lt;/p&gt;
+
+&lt;p&gt;My proposal for FOSSASIA PSLab was selected.&lt;/p&gt;
+&lt;h3 id=&quot;title-develop-an-android-science-app-for-pslab-experiments&quot;&gt;Title : Develop an Android Science App for PSLab Experiments.&lt;/h3&gt;
+
+&lt;p&gt;A brief intro about &lt;a href=&quot;https://pslab.fossasia.org/&quot;&gt;Pocket Science Lab&lt;/a&gt;, its an Open Source Hardware Device which provides a lot of functionality that is required to perform a general scientific experiment. You can do a lot of other activities like monitoring motion using MPU6050 sensor by the add-on sensors which the device support. The device supports many sensors complete list can be seen &lt;a href=&quot;https://github.com/fossasia/pslab-android/tree/development/app/src/main/java/org/fossasia/pslab/sensorfragment&quot;&gt;here&lt;/a&gt;. Python Client for PSLab supports more sensors, a list can be viewed &lt;a href=&quot;https://github.com/fossasia/pslab-python/tree/development/PSL/SENSORS&quot;&gt;here&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Current Applications of PSLab are :&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;4-Channel, up to 2 msps (millions of samples per second) Oscilloscope&lt;/li&gt;
+  &lt;li&gt;Shows variation of analog signals (constantly varying signals)&lt;/li&gt;
+  &lt;li&gt;4-Channels for Logic Analyzer&lt;/li&gt;
+  &lt;li&gt;Captures and displays signals from digital system&lt;/li&gt;
+  &lt;li&gt;2 Sine Wave Generators, Frequency Range (5Hz - 5KHz)&lt;/li&gt;
+  &lt;li&gt;4 PWM (Pulse Width Modulation) Wave Generator, Range up to 8MHz&lt;/li&gt;
+  &lt;li&gt;Capacitance Measurement, Range (pF-uF)&lt;/li&gt;
+  &lt;li&gt;3 12-bit Programmable Voltage Sources&lt;/li&gt;
+  &lt;li&gt;12-bit Programmable Current Source&lt;/li&gt;
+  &lt;li&gt;I2C/SPI/UART data-buses for Accelerometer/Gyroscope/humidity/temperature sensors etc&lt;/li&gt;
+  &lt;li&gt;Supports other Add ons/Advanced Plugins&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;For details about hardware and firmware for PSLab Device, Refer ReadMe of corresponding repository.&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/fossasia/pslab-firmware&quot;&gt;&lt;strong&gt;PSLab Firmware&lt;/strong&gt;&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/fossasia/pslab-hardware&quot;&gt;&lt;strong&gt;PSLab Hardware&lt;/strong&gt;&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;My project for Summer 2017 involves making an Android Client for PSLab Device. In short you can do the experiments by connecting your mobile phone with device through OTG cable. To be precise, here is abstract that I gave for GSOC&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;“Create an Android App from scratch which would enable user to use PSLab directly from their mobile phone through an OTG cable and perform various experiments and get output from App itself. Many PSLab experiments have been already implemented in Python. They can be ported to Android and can be performed directly from the phone.”&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;There were other devs (Jithin, Akarshan, Padmal, Asitva) who were working along with me for the Pocket Science Lab. Mentors (Mario, Praveen, Lorenz) were awesome and helped a lot during the GSOC programme.&lt;/p&gt;
+
+&lt;p&gt;My blog posts during the GSOC-17 period can be viewed at FOSSASIA’s blog&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.fossasia.org/android-app-debugging-over-wifi-for-pslab/&quot;&gt;Android App Debugging Over Wi-Fi For PSLab&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.fossasia.org/establishing-communication-between-pslab-and-an-android-device-using-the-usb-host-api/&quot;&gt;Establishing Communication Between PSLab And An Android Device Using The USB Host API&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.fossasia.org/communication-by-pyserial-python-module-in-pslab/&quot;&gt;Communication by PySerial Python Module in PSLab&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.fossasia.org/packing-and-unpacking-data-in-pslab-android-app/&quot;&gt;Packing and Unpacking Data in PSLab Android App&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.fossasia.org/handling-graph-plots-using-mpandroid-chart-in-pslab-android-app/&quot;&gt;Handling Graph Plots Using MPAndroid Chart in PSLab Android App&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.fossasia.org/expandable-listview-in-pslab-android-app/&quot;&gt;Expandable ListView in PSLab Android App&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.fossasia.org/plotting-digital-logic-lines-in-pslab-android-app/&quot;&gt;Plotting Digital Logic Lines in PSLab Android App&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.fossasia.org/opening-local-html-files-in-pslab-android-app/&quot;&gt;Open Local HTML Files in PSLab Android App&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.fossasia.org/making-custom-change-listeners-in-pslab-android/&quot;&gt;Making Custom Change Listener in PSLab Android App&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.fossasia.org/using-the-audio-jack-to-make-an-oscilloscope-in-the-pslab-android-app/&quot;&gt;Using AudioJack to make Oscilloscope in the PSLab Android App&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.fossasia.org/performing-the-experiments-using-the-pslab-android-app/&quot;&gt;Performing The Experiments Using The PSLab Android App&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.fossasia.org/implementing-experiment-functionality-in-pslab-android/&quot;&gt;Implementing Experiment Functionality in PSLab Android App&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.fossasia.org/implement-wave-generation-functionality-in-the-pslab-android-app/&quot;&gt;Implement Wave Generation Functionality in PSLab Android App&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.fossasia.org/sensor-data-logging-in-the-pslab-android-app/&quot;&gt;Sensor Data Logging in PSLab Android App&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.fossasia.org/export-sensor-data-from-the-pslab-android-app/&quot;&gt;Export Sensor Data From The PSLab Android App&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.fossasia.org/filling-audio-buffer-to-generate-waves-in-the-pslab-android-app/&quot;&gt;Filling Audio Buffer to Generate Waves in the PSLab Android App&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Above are links to all the blog posts that I wrote during development of the PSLab Android App.&lt;/p&gt;
+
+&lt;p&gt;Link of gist that I submitted for final evaluation : &lt;a href=&quot;https://gist.github.com/viveksb007/b394b5815ebe4208435509ce40ec4521&quot;&gt;GSOC-17 Report Vivek&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://play.google.com/store/apps/details?id=org.fossasia.pslab&quot; target=&quot;_blank&quot;&gt;
+&lt;img src=&quot;/assets/img/gplay_badge.png&quot; alt=&quot;Google Play Badge&quot; style=&quot;display: block; margin-left: auto; margin-right: auto;&quot; /&gt;
+&lt;/a&gt;&lt;/p&gt;
+</description>
+				<pubDate>Sun, 29 Oct 2017 00:00:00 +0530</pubDate>
+				<link>/2017/10/gsoc-2017-pslab-fossasia</link>
+				<guid isPermaLink="true">/2017/10/gsoc-2017-pslab-fossasia</guid>
+			</item>
+		
+			<item>
+				<title>Flash Fastboot MIUI ROM from Linux</title>
+				<description>&lt;p&gt;&lt;img src=&quot;/assets/img/flash_fastboot_rom.png&quot; alt=&quot;Fastboot ROM Banner Image&quot; style=&quot;display: block; margin-left: auto; margin-right: auto;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Sometimes during switching between ROM on your android device, you can do the following things&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Stuck in bootloop (phone is stuck on MI logo while booting)&lt;/li&gt;
+  &lt;li&gt;Brick your device accidentally :P&lt;/li&gt;
+  &lt;li&gt;Or some other irrecoverable problem during rooting or changing recovery&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;When nothing works, you have to flash ROM through fastboot. This post describes how you can flash fastboot MIUI Rom from your Linux system. And it’s super easy compared to windows. I would take Redmi 3S Prime (land) ROM for example in the terminal commands, change the ROM name according to your needs.&lt;/p&gt;
+
+&lt;p&gt;To enter into fastboot mode press &lt;strong&gt;&lt;em&gt;volume down + power button&lt;/em&gt;&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;h3 id=&quot;first-download-fastboot-miui-rom-for-your-android-device&quot;&gt;First Download Fastboot MIUI ROM For Your Android Device&lt;/h3&gt;
+&lt;p&gt;Head over to Xiaomi MIUI forum and select ROM for your device&lt;br /&gt;&lt;br /&gt;
+Forum Link : &lt;a href=&quot;http://en.miui.com/a-234.html&quot;&gt;http://en.miui.com/a-234.html&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Once its downloaded extract it using default Archive Manager or using following command:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;tar -xvzf land_global_images_7.9.8_20170908.0000.00_6.0_global_5524854df9.tgz&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h3 id=&quot;install-android-adb-tools-and-fastboot-tools&quot;&gt;Install Android ADB tools and Fastboot tools&lt;/h3&gt;
+&lt;p&gt;For ADB (Android Debug Bridge)&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;sudo apt-get install android-tools-adb&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;For Fastboot tools&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;sudo apt-get install android-tools-fastboot&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h3 id=&quot;change-to-extracted-rom-directory&quot;&gt;Change To Extracted ROM Directory&lt;/h3&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;nb&quot;&gt;cd &lt;/span&gt;land_global_images_7.9.8_20170908.0000.00_6.0_global&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/img/directory_screenshot.png&quot; alt=&quot;Fastboot ROM Folder&quot; style=&quot;display: block; margin-left: auto; margin-right: auto;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Inside the extracted ROM directory, there are many scripts like&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;flash_all.sh:&lt;/strong&gt; This script would flash everything i.e everything from your phone would be erased similar to when your phone was new.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;flash_all_except_data_storage.sh:&lt;/strong&gt; This script would save your data and flash other&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;flash_all_lock.sh:&lt;/strong&gt; This script would flash everything and lock the bootloader after flashing.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The following is a list of Android Partitions:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;/boot&lt;/li&gt;
+  &lt;li&gt;/system&lt;/li&gt;
+  &lt;li&gt;/recovery&lt;/li&gt;
+  &lt;li&gt;/data&lt;/li&gt;
+  &lt;li&gt;/cache&lt;/li&gt;
+  &lt;li&gt;/misc&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Different scripts flash different set of partitions. Further explanation is out of scope for this post. Choose script that suits your flashing needs, it would be most probably &lt;strong&gt;&lt;em&gt;flash_all_except_data_storage.sh&lt;/em&gt;&lt;/strong&gt; as you want to save the user data.&lt;/p&gt;
+
+&lt;h3 id=&quot;give-execution-permission-to-script-and-run-script&quot;&gt;Give Execution Permission to Script and Run Script&lt;/h3&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;sudo chmod +x flash_all_except_data_storage.sh&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;sudo sh flash_all_except_data_storage.sh&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Now the ROM flashing would start and phone would reboot automatically when the flashing ends.&lt;/p&gt;
+</description>
+				<pubDate>Mon, 11 Sep 2017 00:00:00 +0530</pubDate>
+				<link>/2017/09/flash-fastboot-miui-rom-from-linux</link>
+				<guid isPermaLink="true">/2017/09/flash-fastboot-miui-rom-from-linux</guid>
+			</item>
+		
+			<item>
+				<title>Minor II : At Last</title>
+				<description>&lt;p&gt;So its my 6th semester and time to decide some idea to work on as Minor II. After Minor I in which I made Advanced Attendance System ( for which i got way more marks than I should have :P ).&lt;/p&gt;
+
+&lt;h3 id=&quot;a-brief-review-ofminor-i--advanced-attendance-system&quot;&gt;A brief review of Minor I : &lt;strong&gt;ADVANCED ATTENDANCE SYSTEM&lt;/strong&gt;&lt;/h3&gt;
+&lt;p&gt;The project is basically a set of two Applications that run on smartphone. One Called Attendance Server that runs on Teachers phone and other Attendance Client that runs on Students phone.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Attendance Server:&lt;/strong&gt; This Application makes use of wi-fi of smartphone to open an Access Point ( AP ) or wi-fi hot-spot, for Client applications to connect and mark attendance. It also opens a server ( Attendance Server ) that manages the incoming data from Client Applications and stores them in a database for others tasks like synchronising attendance data with some Cloud Server for students to see their attendance progress.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Attendance Client:&lt;/strong&gt; This Application makes use of wi-fi of smartphone to connect to Access Point created by Server App. When Mark Attendance is clicked it sends it’s device ID and Roll No to Server App, device ID is used to filter phones to prevent proxy.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;&lt;em&gt;Attendance Server : https://github.com/viveksb007/AttendanceServer&lt;/em&gt;&lt;/strong&gt;&lt;br /&gt;&lt;br /&gt;
+&lt;strong&gt;&lt;em&gt;Attendance Client : https://github.com/viveksb007/AttendanceClient&lt;/em&gt;&lt;/strong&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;idea-for-minor-ii-self-driving-rc-car--idea-credits--jiten-sardana-&quot;&gt;Idea for Minor II : &lt;strong&gt;SELF DRIVING RC CAR&lt;/strong&gt; ( idea credits : Jiten Sardana )&lt;br /&gt;&lt;/h3&gt;
+&lt;p&gt;&lt;strong&gt;“Self driving RC Car”&lt;/strong&gt; name sounds cool right but the way its going to implemented is more cool. Without any delay, lets dive into implementation details.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/img/projects/self_driving_prototype.png&quot; alt=&quot;Self Driving Prototype&quot; style=&quot;display: block; margin-left: auto; margin-right: auto;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;First I will mount Android Phone on a RC Car to capture Live Feed from car. For this I made an Android App that transfers live camera feed from Android to Desktop and open-sourced it. Source can be found at &lt;a href=&quot;https://github.com/viveksb007/LiveFeed&quot;&gt;LiveFeed&lt;/a&gt;.&lt;br /&gt;&lt;br /&gt;
+At desktop runs a Python script that captures the feed. Android hot-spot is used as communication interface between Android and Desktop. Now I have the view what the car has.&lt;br /&gt;&lt;br /&gt;
+Coming to II step, Interface RC car’s remote to arduino and connect arduino to PC for Serial communication. Now we need to train the network ( YES NEURAL NETWORK IS USED :D ). I will drive the car by watching feed on desktop and controlling it through arrow keys which give signal to arduino serially which in turn signals car through RC remote. Question : How network is trained? While I drive and press arrow button at that instance, frame of feed is saved with corresponding arrow key. So, the network knows which key was pressed at which frame, doing this for N times will improve network accuracy. Lets leave accuracy aside for now. So now we have a trained network.&lt;br /&gt;&lt;br /&gt;
+Using this network car would drive itself, frame from feed is given to network as input and gets arrow key as output which is given to arduino which controls car through RC remote. This almost covers all the implementation steps.&lt;br /&gt;&lt;br /&gt;
+Python is used for neural network implementation for this project and pyserial module for serial communication with Arduino.&lt;/p&gt;
+
+&lt;p&gt;Repository for scripts used : &lt;a href=&quot;https://github.com/viveksb007/SD_CAR_MINOR&quot;&gt;https://github.com/viveksb007/SD_CAR_MINOR&lt;/a&gt;&lt;/p&gt;
+</description>
+				<pubDate>Tue, 14 Mar 2017 00:00:00 +0530</pubDate>
+				<link>/2017/03/minor-II-at-last</link>
+				<guid isPermaLink="true">/2017/03/minor-II-at-last</guid>
+			</item>
+		
+			<item>
+				<title>Qualcomm DragonBoard 410C</title>
+				<description>&lt;p&gt;Its about a week since i got my dragonboard410c shipped. Was Reading documentation and stuff so as to not destroy the only MicroProcessor Board i have :P&lt;/p&gt;
+
+&lt;p&gt;Refer &lt;strong&gt;&lt;a href=&quot;https://developer.qualcomm.com/hardware/dragonboard-410c&quot;&gt;DragonBoard410c&lt;/a&gt;&lt;/strong&gt; for Specs&lt;/p&gt;
+
+&lt;p&gt;DragonBoard410c is shipped with Android Lollipop by default as of now.&lt;br /&gt;
+So i found three ways to get started with board right out of BOX :&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Connect HDMI output port of board with HDMI monitor or LCD TV, Make sure to connect mouse,keyboard and HDMI before powering up the board. A detailed info is given &lt;a href=&quot;http://www.96boards.org/forums/topic/short-into-to-start-your-dragonboard-410c-with-hdmi-display/&quot;&gt;here&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;By using UART to USB Cable or if you have Mezzanine. Again detailed info &lt;a href=&quot;http://www.96boards.org/forums/topic/short-into-to-start-your-dragonboard-410c-with-serial-console/&quot;&gt;here&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;For some Devs, using Vysor Worked. But i tried and it didn`t Worked. May be because for Vysor you need to Enable Developers Option and USB Debugging.&lt;br /&gt;
+&lt;br /&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/img/db410c.jpg&quot; alt=&quot;My DragonBoard410c&quot; /&gt;&lt;/p&gt;
+</description>
+				<pubDate>Wed, 04 May 2016 00:00:00 +0530</pubDate>
+				<link>/2016/05/dragonboard410c</link>
+				<guid isPermaLink="true">/2016/05/dragonboard410c</guid>
+			</item>
+		
+			<item>
+				<title>Processing</title>
+				<description>&lt;p&gt;Started with processing in beginning of this month. Listened a lot about capabilities of processing language and trust me it wasn`t a lie.&lt;br /&gt;
+So as always i began with searching  something to start with on YouTube and found &lt;a href=&quot;https://www.youtube.com/playlist?list=PL374E5107CB62B2BE&quot;&gt;this Processing Tutorial&lt;/a&gt; ,its great to start with. So without delay i am going to share some stuff that i made on way of learning Processing.&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;center&gt;
+&lt;figure&gt;
+    &lt;canvas data-processing-sources=&quot;/assets/code/waves.pde&quot;&gt;
+    &lt;p&gt;Your browser does not support the canvas tag.&lt;/p&gt;
+    &lt;/canvas&gt;
+    &lt;figcaption&gt;View source code: &lt;a href=&quot;/assets/code/waves.pde&quot;&gt;waves.pde&lt;/a&gt;&lt;/figcaption&gt;
+&lt;/figure&gt;
+&lt;/center&gt;
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;center&gt;
+&lt;figure&gt;
+    &lt;canvas data-processing-sources=&quot;/assets/code/mousefollow.pde&quot;&gt;
+    &lt;p&gt;Your browser does not support the canvas tag.&lt;/p&gt;
+    &lt;/canvas&gt;
+    &lt;figcaption&gt;View source code: &lt;a href=&quot;/assets/code/mousefollow.pde&quot;&gt;mousefollow.pde&lt;/a&gt;&lt;/figcaption&gt;
+&lt;/figure&gt;
+&lt;/center&gt;
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;center&gt;
+&lt;figure&gt;
+    &lt;canvas data-processing-sources=&quot;/assets/code/ColoredWheel.pde&quot;&gt;
+    &lt;p&gt;Your browser does not support the canvas tag.&lt;/p&gt;
+    &lt;/canvas&gt;
+    &lt;figcaption&gt;View source code: &lt;a href=&quot;/assets/code/ColoredWheel.pde&quot;&gt;ColoredWheel.pde&lt;/a&gt;&lt;/figcaption&gt;
+&lt;/figure&gt;
+&lt;/center&gt;
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;
+Its just basic stuff, as i don`t know about importing other libraries in Processing.js and for a bit complex see this &lt;a href=&quot;https://github.com/viveksb007/Processing&quot;&gt;repo&lt;/a&gt;, Android and Java Sketches are in the repo.&lt;/p&gt;
+
+</description>
+				<pubDate>Thu, 24 Mar 2016 00:00:00 +0530</pubDate>
+				<link>/2016/03/processing</link>
+				<guid isPermaLink="true">/2016/03/processing</guid>
+			</item>
+		
+	</channel>
+</rss>
