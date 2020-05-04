@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Use Psiphon on Mac OS And Linux"
-date: "2018-11-18"
+date: 2018-11-18
 tags: [psiphon, unix]
 comments: true
 ---
