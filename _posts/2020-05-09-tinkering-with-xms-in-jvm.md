@@ -52,12 +52,17 @@ From Oracle documentation:
 
 > java -XX:+AlwaysPreTouch -Xms20G Test
 
-This works in the same way with a caveat that the JVM touches all the pages in the initialization phase of application. So when I run -Xms200G, it stops working in MacOS too. 
+This works in the same way with a caveat that the JVM touches all the pages in the initialization phase of application. Apparently, this works in Mac, somehow MacOS gives 20GB memory to JVM (See image below). But when I run this with -Xms200G, it stops working in MacOS too. Now the question is how does prefaulting 20G memory in MacOS works. [This](https://superuser.com/a/105474) might give you some idea. 
+
+<figure>
+    <img src="/assets/img/jvm_memory_mac.png" alt="Memory Info from MacOS" style="display: block; margin-left: auto; margin-right: auto;"/>
+    <figcaption style="text-align: center; font-style: italic;">Memory Info from MacOS</figcaption>
+</figure>
 
 ## References
 
-* https://stackoverflow.com/questions/43302720/do-the-xms-and-xmx-flags-reserve-the-machines-resources/43307880#43307880
-* https://www.oracle.com/java/technologies/javase/vmoptions-jsp.html
+* [https://stackoverflow.com/questions/43302720/do-the-xms-and-xmx-flags-reserve-the-machines-resources/43307880#43307880](https://stackoverflow.com/questions/43302720/do-the-xms-and-xmx-flags-reserve-the-machines-resources/43307880#43307880)
+* [https://www.oracle.com/java/technologies/javase/vmoptions-jsp.html](https://www.oracle.com/java/technologies/javase/vmoptions-jsp.html)
 
 ### P.S
 >I read Xms memory is limited by **RAM + Swap Memory**, but in some OS it can exceed that depending upon whether you are prefaulting the memory or not. If some part of post is inaccurate or if there is something I am missing. Please comment, I will be happy to update post.

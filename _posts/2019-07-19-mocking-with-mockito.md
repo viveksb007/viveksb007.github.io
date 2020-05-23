@@ -55,6 +55,6 @@ ConstantDataProvider dp = mock(ConstantDataProvider.class, withSettings().stubOn
 
 ## References:
 
-* https://code.google.com/archive/p/mockito/issues/84  
+* [https://code.google.com/archive/p/mockito/issues/84](https://code.google.com/archive/p/mockito/issues/84)  
   
-* https://stackoverflow.com/questions/17437660/mockito-throws-an-outofmemoryerror-on-a-simple-test
+* [https://stackoverflow.com/questions/17437660/mockito-throws-an-outofmemoryerror-on-a-simple-test](https://stackoverflow.com/questions/17437660/mockito-throws-an-outofmemoryerror-on-a-simple-test)
