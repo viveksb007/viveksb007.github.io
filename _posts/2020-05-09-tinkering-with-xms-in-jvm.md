@@ -11,7 +11,7 @@ In this post, I am going to share my observation after playing with Xms paramete
 Initially, my understanding of Xms was that 
 > Xms is the minimum heap space the JVM should get before starting the Java process, if this much main memory (RAM) isn't available then program should not start.
 
-So I wrote a simple program and ran it with different Xms values:
+So I wrote a simple program which just outputs a `String`.
 
 ```java
 // Simple program that I ran with different Xms values
@@ -23,6 +23,17 @@ public class Test {
 
 }
 ```
+
+Compiled above program using
+
+`javac Test.java`
+
+and ran with different Xms values like **20G, 200G, 2000G** to see what happens (**_According to my understanding, any value of Xms more than free RAM should not work_**). But the result differed when I tried the same thing accross different OS like MacOS and Windows.
+
+`java -XmsVALUE Test`
+
+Refer below image for the Xms values that I tried and their output after the execution.
+
 <figure>
     <img src="/assets/img/jvm_terminal_mac.png" alt="Terminal from MAC" style="display: block; margin-left: auto; margin-right: auto;"/>
     <figcaption style="text-align: center; font-style: italic;">Terminal from MAC</figcaption>
