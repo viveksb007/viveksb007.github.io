@@ -297,6 +297,8 @@ So we can't say anything conclusively here. If we see from the BigO perspective,
 ## Conclusion:
 We discussed about streams and some examples codes showing their usage. And how they can be used to achieve composability. On Performance testing front we couldn't say anything conclusively. I was looking into [Epsilon Garbage collector](https://blogs.oracle.com/javamagazine/epsilon-the-jdks-do-nothing-garbage-collector) that does only memory allocation work and does no garbage collection. So if you are testing something, you should know its runtime when there is no garbage collection, else you don't know how much time did GC took from the total time your code ran. So going ahead, will try to use Epsilon GC for any performance testing stuff.
 
+> Note: If something seems inaccurate/wrong, please feel free to comment. Will be happy to update the post. 
+
 ## References:
 * [https://www.baeldung.com/java-inifinite-streams](https://www.baeldung.com/java-inifinite-streams){:target="_blank"}
 * [https://en.wikipedia.org/wiki/Stream_(computing)](https://en.wikipedia.org/wiki/Stream_(computing)){:target="_blank"}
