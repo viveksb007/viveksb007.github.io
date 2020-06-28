@@ -44,7 +44,7 @@ This covers auto-boxing and auto-unboxing, similar techniques are extended to ot
 
 ## Integer Cache
 
-Integer class keeps a cache of Integer objects within some range. Let's decompile and have a look at `Integer.valueOf(int i)` implementation.
+Integer class keeps a cache of Integer objects within some range. Cache class is `IntegerCache` which is a `static` member of `Integer` class. Let's decompile and have a look at `Integer.valueOf(int i)` implementation.
 
 ```java
 public static Integer valueOf(int i) {
