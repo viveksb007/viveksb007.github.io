@@ -50,7 +50,7 @@ permalink: /:year/:month/:title
 
 #highlighter: rouge
 
-gems:
+plugins:
   - jekyll-feed     # Enable automatic Atom feed creation
   - jekyll-sitemap  # Github Pages will automatically generate a sitemap
   - jekyll-seo-tag  # Enable automatic generation of metadata for seo
