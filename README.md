@@ -3,6 +3,10 @@ Jekyll Clean Dark
 
 [![Gem Version](https://badge.fury.io/rb/jekyll-clean-dark.svg)](https://badge.fury.io/rb/jekyll-clean-dark)
 
+To build the site locally follow : https://jekyllrb.com/docs/
+
+`bundle exec jekyll serve`
+
 See Live Site Demo : https://viveksb007.github.io/
 
 This repo is slight modification of [https://github.com/streetturtle/jekyll-clean-dark](streetturtle/jekyll-clean-dark)
