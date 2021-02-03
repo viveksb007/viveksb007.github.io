@@ -1,3 +1,11 @@
+- name: PhoneMic
+  url: https://play.google.com/store/apps/details?id=com.viveksb007.phonemic
+  descr: Connect you phone to a loudspeaker via bluetooth or mobile jack. And your mobile would transform into a Wireless Mic. There is equalizer support in the app to modify some frequency components of your speech. You can also choose from given presets like Jazz, Pop, Rock, etc.
+
+- name: SnapScreenshot
+  url: https://play.google.com/store/apps/details?id=com.viveksb007.snapnscreenshot
+  descr: This is a screenshot app that takes mobile screenshot and store it in a private folder instead of broadcasting that a new image is created. Thus also allows to screenshot snapchat without triggering the notification to other person. 
+
 - name: LiveFeed
   url: https://github.com/viveksb007/LiveFeed
   descr: Transfers real-time camera feed from android phone to desktop, python script runs on desktop which receives and renders camera frames.
@@ -17,10 +25,6 @@
 - name:  AndroidTerminal
   url:   https://github.com/viveksb007/AndroidTerminal
   descr: You can control any device`s terminal Laptop,RasPi,etc capable of running Python from your Android Smartphone. App on Android Device and Python script on target device. Project uses Firebase for exchange of command and response of terminal. Python Script executes command through subprocess module and sends the response to android app
-
-- name:  TicTacToe Android
-  url:   https://github.com/viveksb007/TicTacToe2.0
-  descr: Added A.I (Computer Player) to enable single person to play.
 
 - name:  PythonScripts
   url: https://github.com/viveksb007/PythonScripts
