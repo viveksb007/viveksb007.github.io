@@ -107,7 +107,9 @@ We created a project on similar lines for the Solana Seaszn hackathon. We basica
 {% include youtubeplayer.html id=page.youtubeId %}
 
 ## Conclusion
-Raydium pools source code is still closed. So we can't know for sure how the pools maintain its constant curve state. After reading through the raydium litepaper, it looks like raydium pools maintain their price invariant curve by placing order on serum DEX orderbooks to adjust its curve. MobileDEX app is my first project in this domain. You can read the raydium litepaper [here](https://raydium.io/Raydium-Litepaper.pdf) and if you have some ideas on how pool state is maintained, feel free to comment. Will be happy to enhance the post content.
+Raydium pools source code is still closed. So we can't know for sure how the pools maintain its constant curve state. After reading through the raydium litepaper, it looks like raydium pools maintain their price invariant curve by placing order on serum DEX orderbooks to adjust its curve. General solution to maintain pool state is through arbitrage. Arbitrage plays an important role in bringing different markets to common prices.
+
+MobileDEX app is my first project in this domain. You can read the raydium litepaper [here](https://raydium.io/Raydium-Litepaper.pdf) and if you have some ideas on how pool state is maintained, feel free to comment. Will be happy to enhance the post content.
 
 ## References
 - <https://github.com/raydium-io/raydium-ui>
