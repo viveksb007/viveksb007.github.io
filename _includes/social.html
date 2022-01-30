@@ -1,5 +1,11 @@
 <ul class="social-media">
 
+  {% if site.social.twitter %}
+    <li>
+      <a title="{{ site.social.twitter }} on Twitter" href="https://twitter.com/{{ site.social.twitter }}" target="_blank"><i class="fa fa-twitter fa-2x"></i></a>
+    </li>
+  {% endif %}
+
   {% if site.social.github %}
     <li>
       <a title="{{ site.social.github }} on Github" href="https://github.com/{{ site.social.github }}" target="_blank"><i class="fa fa-github fa-2x"></i></a>
