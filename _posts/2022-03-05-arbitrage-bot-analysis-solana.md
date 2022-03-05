@@ -115,6 +115,8 @@ Attached below are the account addresses which [Misaka](https://twitter.com/0xMi
 ## Misc
 Bots on solana do a lot of transactions and most of them fail as they don’t end up with profit. They can afford it due to transaction fees being very less i.e **0.000005 SOL**. New folks can enter the arb scenario to test the waters as transaction fees are very less. For new folks with very little capital to spare, it is not possible on Ethereum due to very high tx fees. I did some fee calculation for a bot account **_(Gn35xm6fr3ByUJt9aC6ZSzSqzb15AyryhKQmZVoP56Z1)_** this bot spent ~4.8 SOL as transaction fees for ~961_400 transactions. Haven’t calculated the profit but it would easily be in millions. You can use [fees.solar](https://fees.solar/) to find fee stats of any solana account.
 
+<img src="/assets/img/fees.solar.png" alt="Fees Solar stats" style="display: block; margin-left: auto; margin-right: auto;"/>
+
 ## FAQs
 - How to start development on Solana blockchain?
 There are a lot of twitter threads which point to getting started in Solana. 
