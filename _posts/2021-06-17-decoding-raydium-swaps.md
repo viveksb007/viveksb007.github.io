@@ -2,7 +2,7 @@
 layout: post
 title: "Decoding Raydium Swaps"
 date: 2021-06-17
-tags: [Web3, DEX]
+tags: [Web3, DEX, Solana]
 youtubeId: gwTP-uugUa8
 comments: true
 ---
