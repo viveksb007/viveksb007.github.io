@@ -1,3 +1,79 @@
-baseURL: https://example.org/
+baseURL: https://viveksb007.github.io
 languageCode: en-us
-title: My New Hugo Site
+title: viveksb007
+theme: paperMod
+googleAnalytics: UA-72531800-1
+enableEmoji: true
+enableRobotsTXT: true
+
+menu:
+  main:
+    - identifier: Archives
+      name: Archives
+      url: /archives/
+      weight: 10
+    - name: Search
+      url: /search/
+      weight: 20
+    - name: Tags
+      url: /tags/
+      weight: 30
+
+params:
+    env: production
+    defaultTheme: auto
+    profileMode:
+        enabled: true
+        title: "Vivek Singh Bhadauria" 
+        # subtitle: "This is subtitle"
+        imageUrl: "/profile.jpeg" # optional
+        imageTitle: "Main Profile Photo" # optional
+        imageWidth: 240 # custom size
+        imageHeight: 240 # custom size
+        buttons:
+          - name: Blog
+            url: "/archives"
+          - name: Github
+            url: "https://github.com/viveksb007"
+
+    ShowReadingTime: true
+    ShowShareButtons: true
+    ShowPostNavLinks: true
+    ShowBreadCrumbs: true
+    ShowCodeCopyButtons: true
+    disableScrollToTop: false
+    comments: true
+
+    assets:
+      favicon: favicon.png
+      favicon16x16: favicon.png
+      favicon32x32: favicon.png
+      apple_touch_icon: favicon.png
+      safari_pinned_tab: favicon.png
+
+    socialIcons:
+      - name: github
+        url: 'https://github.com/viveksb007'
+      - name: twitter
+        url: 'https://twitter.com/viveksb007'
+      - name: linkedin
+        url: 'https://www.linkedin.com/in/viveksb007/'
+      - name: RSS
+        url: index.xml
+
+    fuseOpts:
+        isCaseSensitive: false
+        shouldSort: true
+        location: 0
+        distance: 1000
+        threshold: 0.4
+        minMatchCharLength: 0
+        keys: ["title", "permalink", "summary", "content"]
+
+
+outputs:
+  home:
+    - HTML
+    - RSS
+    - JSON
+
