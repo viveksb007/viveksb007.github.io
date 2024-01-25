@@ -8,16 +8,16 @@ enableRobotsTXT: true
 
 menu:
   main:
-    - identifier: Archives
-      name: Archives
-      url: /archives/
-      weight: 10
+    # - identifier: Archives
+    #   name: Archives
+    #   url: /archives/
+    #   weight: 10
     - name: Search
       url: /search/
       weight: 20
-    - name: Tags
-      url: /tags/
-      weight: 30
+    # - name: Tags
+    #   url: /tags/
+    #   weight: 30
 
 params:
     env: production
@@ -35,6 +35,8 @@ params:
             url: "/archives"
           - name: Github
             url: "https://github.com/viveksb007"
+          - name: About
+            url : "/about"
 
     ShowReadingTime: true
     ShowShareButtons: true
