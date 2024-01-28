@@ -22,6 +22,7 @@ menu:
 params:
     env: production
     defaultTheme: auto
+    description: "Personal Website, Blog of Vivek Singh Bhadauria"
     profileMode:
         enabled: true
         title: "Vivek Singh Bhadauria" 
