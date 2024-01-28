@@ -1,7 +1,7 @@
 baseURL: https://viveksb007.github.io
 languageCode: en-us
 title: viveksb007
-theme: paperMod
+theme: github.com/adityatelange/hugo-PaperMod
 googleAnalytics: G-MDHYNBH6MS
 enableEmoji: true
 enableRobotsTXT: true
