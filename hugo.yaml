@@ -61,6 +61,8 @@ params:
         url: 'https://twitter.com/viveksb007'
       - name: linkedin
         url: 'https://www.linkedin.com/in/viveksb007/'
+      - name: instagram
+        url: 'https://www.instagram.com/viveksb007/'
       - name: RSS
         url: index.xml
 

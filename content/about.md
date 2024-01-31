@@ -8,16 +8,16 @@ ShowBreadCrumbs: false
 
 Hey, I'm Vivek!
 
-I am currently working on AWS Route53 team in US. Previously, I worked for Coinbase, Deutsche Bank.
+Welcome to my corner of the web! I'm currently working as a Software Development Engineer on the AWS Route53 team in the US, where I'm working on DNS (and stuff) on the cloud and on-prem. Before this, I delved into the dynamic realms of cryptocurrency with Coinbase and worked in the banking space for Deutsche Bank.
 
-I like to explore new technologies, make utility android apps, write technical blogs, contribute to OSS and try to keep myself fit (***in no particular order***). I am fascinated by distributed systems and their design choices for availability and scale.
+I graduated in **Electronics and Communication Engineering** from **Delhi Technological University (formerly Delhi College of Engineering)**. During my time as a **Google Summer of Code** Student Developer under **FOSSASIA** in 2017, I acquired skills like Android development, open-source contribution process, etc. In GSOC, my work primarily focussed on developing Android clients for the [**PSLab Hardware Device**](https://pslab.fossasia.org/) and sharing my insights and development journey through technical blog posts on the [**Fossasia Blog**](https://pslab.io/blog/author/viveksb007/). You can explore more of my projects on my [**Github profile**](https://github.com/viveksb007).
 
-Graduated in **Electronics and Communication Engineering** from **Delhi Technological University (Formerly Delhi College of Engineering)**
+During my stint as a **Software Developer Intern** at the **SAMSUNG Research and Development Institute**, I took on the exciting challenge of creating the **"SAMSUNG ALERT MODE"** for Samsung smartphones from scratch. However, it remained a proof of concept that never saw the light of day.
 
-I was a **Google Summer of Code Student Developer** under **FOSSASIA** in 2017. Mostly worked on [Android Client](https://github.com/fossasia/pslab-android) for [**PSLab Device**](https://pslab.fossasia.org/) and wrote blog posts about the project on [**Fossasia Blog**](https://pslab.io/blog/author/viveksb007/). Check out my [**Github profile**](https://github.com/viveksb007) for more projects.
+My passion extends beyond the workplace. I'm an avid explorer of new technologies, I like developing utility Android apps, writing technical blogs, and contributing to open-source projects. I'm fascinated by the intricacies of distributed systems and the design choices that underpin their availability and scalability.
 
-I was also **Software Developer Intern** for **SAMSUNG Research and Development Institute**. Developed **SAMSUNG ALERT MODE** for Samsung Smart Phones from scratch which was a POC and never got released.
+I am using this site as a medium to document my learnings in tech/finance/fitness space. 
 
-**NOTE : All the posts and opinions are my personal view/experience and not related to any organisation I work for.** 
+**NOTE: All the posts and opinions are my personal views/experiences and are unrelated to any organization I work for.** 
 
 You can connect with me on [Twitter](https://twitter.com/viveksb007) or [LinkedIn](https://www.linkedin.com/in/viveksb007/) 
