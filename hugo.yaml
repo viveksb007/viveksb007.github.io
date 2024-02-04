@@ -85,3 +85,10 @@ outputs:
     - RSS
     - JSON
 
+frontmatter:
+  date:
+    - :filename
+    - :default
+
+permalinks:
+  posts: :year/:month/:slug
