@@ -161,7 +161,7 @@ go run cmd/userspace-tcpip/main.go
 Using `nc` to do tcp handshake with server. We can do tcp handshake with google server and validate by looking at the packets.
 
 1. find `google.com` IP using dig
-```
+```shell
 viveksb007@Viveks-MacBook-Air-2  ~  dig google.com
 
 ; <<>> DiG 9.10.6 <<>> google.com
