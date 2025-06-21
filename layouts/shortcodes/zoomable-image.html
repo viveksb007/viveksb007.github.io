@@ -1,0 +1,25 @@
+{{/* 
+Custom shortcode for zoomable images
+Usage: {{< zoomable-image src="/path/to/image.jpg" alt="Alt text" caption="Optional caption" >}}
+*/}}
+
+{{ $src := .Get "src" }}
+{{ $alt := .Get "alt" | default "" }}
+{{ $caption := .Get "caption" | default "" }}
+{{ $class := .Get "class" | default "" }}
+{{ $width := .Get "width" | default "" }}
+{{ $height := .Get "height" | default "" }}
+
+<figure class="zoomable-figure {{ $class }}">
+    <img 
+        src="{{ $src }}" 
+        alt="{{ $alt }}"
+        {{ with $width }}width="{{ . }}"{{ end }}
+        {{ with $height }}height="{{ . }}"{{ end }}
+        class="zoomable-image"
+        loading="lazy"
+    />
+    {{ with $caption }}
+    <figcaption>{{ . | markdownify }}</figcaption>
+    {{ end }}
+</figure>
