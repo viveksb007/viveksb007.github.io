@@ -66,6 +66,11 @@ params:
       - name: RSS
         url: index.xml
 
+markup:
+  goldmark:
+    renderer:
+      unsafe: true
+
     fuseOpts:
         isCaseSensitive: false
         shouldSort: true
