@@ -1,71 +1,133 @@
 <!-- Zooming.js CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/zooming@2.1.1/build/zooming.min.css">
 
+<!-- Custom CSS for Mermaid diagrams -->
+<style>
+    /* Mermaid diagram styling */
+    .mermaid {
+        margin: 2rem auto;
+        text-align: center;
+        max-width: 100%;
+        overflow-x: auto;
+    }
+
+    /* Light theme (default) */
+    html:not(.dark) .mermaid .flowchart-link {
+        stroke: #333 !important;
+        stroke-width: 2px !important;
+    }
+
+    /* Dark theme */
+    html.dark .mermaid .flowchart-link,
+    .dark .mermaid .flowchart-link {
+        stroke: #ddd !important;
+        stroke-width: 2px !important;
+    }
+
+    /* Ensure text is visible in both themes */
+    html.dark .mermaid .nodeLabel,
+    .dark .mermaid .nodeLabel {
+        color: #ddd !important;
+        fill: #ddd !important;
+    }
+
+    html:not(.dark) .mermaid .nodeLabel {
+        color: #333 !important;
+        fill: #333 !important;
+    }
+
+    /* Ensure edges (arrows) are visible in both themes */
+    html.dark .mermaid .marker,
+    .dark .mermaid .marker {
+        fill: #ddd !important;
+        stroke: #ddd !important;
+    }
+
+    html:not(.dark) .mermaid .marker {
+        fill: #333 !important;
+        stroke: #333 !important;
+    }
+
+    /* Ensure arrowheads are visible */
+    html.dark .mermaid .arrowheadPath,
+    .dark .mermaid .arrowheadPath {
+        fill: #ddd !important;
+        stroke: #ddd !important;
+    }
+
+    html:not(.dark) .mermaid .arrowheadPath {
+        fill: #333 !important;
+        stroke: #333 !important;
+    }
+</style>
+
 <!-- Custom CSS for image zoom -->
 <style>
-.post-content img,
-.content img,
-article img,
-figure img,
-.zoomable-image {
-    cursor: zoom-in;
-    transition: transform 0.2s ease;
-}
-
-.post-content img:hover,
-.content img:hover,
-article img:hover,
-figure img:hover,
-.zoomable-image:hover {
-    transform: scale(1.02);
-}
-
-/* Ensure images are responsive */
-.post-content img,
-.content img,
-article img,
-figure img,
-.zoomable-image {
-    max-width: 100%;
-    height: auto;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin: 1rem 0;
-}
-
-/* Custom styling for zoomable figure shortcode */
-.zoomable-figure {
-    text-align: center;
-    margin: 2rem 0;
-}
-
-.zoomable-figure figcaption {
-    font-style: italic;
-    color: var(--secondary);
-    margin-top: 0.5rem;
-    font-size: 0.9em;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
     .post-content img,
     .content img,
     article img,
     figure img,
     .zoomable-image {
-        box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
+        cursor: zoom-in;
+        transition: transform 0.2s ease;
     }
-}
 
-/* Mobile responsiveness */
-@media (max-width: 768px) {
+    .post-content img:hover,
+    .content img:hover,
+    article img:hover,
+    figure img:hover,
+    .zoomable-image:hover {
+        transform: scale(1.02);
+    }
+
+    /* Ensure images are responsive */
     .post-content img,
     .content img,
     article img,
     figure img,
     .zoomable-image {
-        margin: 0.5rem 0;
-        border-radius: 4px;
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        margin: 1rem 0;
     }
-}
+
+    /* Custom styling for zoomable figure shortcode */
+    .zoomable-figure {
+        text-align: center;
+        margin: 2rem 0;
+    }
+
+    .zoomable-figure figcaption {
+        font-style: italic;
+        color: var(--secondary);
+        margin-top: 0.5rem;
+        font-size: 0.9em;
+    }
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+
+        .post-content img,
+        .content img,
+        article img,
+        figure img,
+        .zoomable-image {
+            box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
+        }
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+
+        .post-content img,
+        .content img,
+        article img,
+        figure img,
+        .zoomable-image {
+            margin: 0.5rem 0;
+            border-radius: 4px;
+        }
+    }
 </style>

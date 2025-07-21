@@ -1,77 +1,131 @@
 <!-- Zooming.js JavaScript -->
 <script src="https://cdn.jsdelivr.net/npm/zooming@2.1.1/build/zooming.min.js"></script>
 
+<!-- Mermaid JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize zooming for all images in post content
-    const zooming = new Zooming({
-        // Configuration options
-        bgColor: 'rgba(0, 0, 0, 0.8)',
-        bgOpacity: 1,
-        scaleBase: 1.0,
-        scaleExtra: 0.5,
-        scrollThreshold: 40,
-        zIndex: 999,
-        customSize: null,
-        enableGrab: true,
-        preloadImage: false,
-        closeOnWindowResize: true,
-        transitionDuration: 0.4,
-        transitionTimingFunction: 'cubic-bezier(0.4, 0, 0, 1)',
-        onOpen: function(target) {
-            // Optional: Add any custom behavior when image opens
-            console.log('Image zoom opened');
-        },
-        onClose: function(target) {
-            // Optional: Add any custom behavior when image closes
-            console.log('Image zoom closed');
-        },
-        onRelease: function(target) {
-            // Optional: Add any custom behavior when image is released
-            return false;
-        }
-    });
+    // Function to detect dark mode
+    function isDarkTheme() {
+        // Check if the body or html element has a dark mode class or data attribute
+        // This depends on how your Hugo theme implements dark mode
+        return document.documentElement.classList.contains('dark') ||
+            document.body.classList.contains('dark') ||
+            document.documentElement.getAttribute('data-theme') === 'dark' ||
+            window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
 
-    // Function to initialize zooming on images
-    function initializeZooming() {
-        // Common selectors for different content areas
-        const selectors = [
-            '.post-content img',
-            '.content img', 
-            'article img',
-            '.post-single .content img',
-            '.post img',
-            'main img',
-            // Hugo figure shortcode generates images within figure tags
-            'figure img',
-            '.figure img'
-        ];
-
-        selectors.forEach(selector => {
-            const images = document.querySelectorAll(selector);
-            if (images.length > 0) {
-                zooming.listen(selector);
-                console.log(`Zooming initialized for ${images.length} images with selector: ${selector}`);
+    // Initialize Mermaid with theme detection
+    function initMermaid() {
+        const theme = isDarkTheme() ? 'dark' : 'default';
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: theme,
+            securityLevel: 'loose',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
             }
         });
     }
 
-    // Initialize zooming
-    initializeZooming();
+    // Initialize Mermaid
+    initMermaid();
 
-    // Also initialize for any dynamically loaded content
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.addedNodes.length > 0) {
-                initializeZooming();
+    // Re-initialize Mermaid when theme changes
+    // This handles theme toggle buttons
+    const observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+            if (mutation.attributeName === 'class' || mutation.attributeName === 'data-theme') {
+                initMermaid();
             }
         });
     });
 
-    // Start observing
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
+    // Observe the document for theme changes
+    observer.observe(document.documentElement, {
+        attributes: true
     });
-});
+    observer.observe(document.body, {
+        attributes: true
+    });
+
+    // Also listen for system preference changes
+    if (window.matchMedia) {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', initMermaid);
+    }
+
+    // Zooming.js initialization
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize zooming for all images in post content
+        const zooming = new Zooming({
+            // Configuration options
+            bgColor: 'rgba(0, 0, 0, 0.8)',
+            bgOpacity: 1,
+            scaleBase: 1.0,
+            scaleExtra: 0.5,
+            scrollThreshold: 40,
+            zIndex: 999,
+            customSize: null,
+            enableGrab: true,
+            preloadImage: false,
+            closeOnWindowResize: true,
+            transitionDuration: 0.4,
+            transitionTimingFunction: 'cubic-bezier(0.4, 0, 0, 1)',
+            onOpen: function (target) {
+                // Optional: Add any custom behavior when image opens
+                console.log('Image zoom opened');
+            },
+            onClose: function (target) {
+                // Optional: Add any custom behavior when image closes
+                console.log('Image zoom closed');
+            },
+            onRelease: function (target) {
+                // Optional: Add any custom behavior when image is released
+                return false;
+            }
+        });
+
+        // Function to initialize zooming on images
+        function initializeZooming() {
+            // Common selectors for different content areas
+            const selectors = [
+                '.post-content img',
+                '.content img',
+                'article img',
+                '.post-single .content img',
+                '.post img',
+                'main img',
+                // Hugo figure shortcode generates images within figure tags
+                'figure img',
+                '.figure img'
+            ];
+
+            selectors.forEach(selector => {
+                const images = document.querySelectorAll(selector);
+                if (images.length > 0) {
+                    zooming.listen(selector);
+                    console.log(`Zooming initialized for ${images.length} images with selector: ${selector}`);
+                }
+            });
+        }
+
+        // Initialize zooming
+        initializeZooming();
+
+        // Also initialize for any dynamically loaded content
+        const observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                if (mutation.addedNodes.length > 0) {
+                    initializeZooming();
+                }
+            });
+        });
+
+        // Start observing
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    });
 </script>
