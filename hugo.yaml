@@ -34,8 +34,8 @@ params:
         buttons:
           - name: Blog
             url: "/archives"
-          - name: Github
-            url: "https://github.com/viveksb007"
+          - name: Learning
+            url: "/learning"
           - name: About
             url : "/about"
 
