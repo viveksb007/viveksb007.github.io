@@ -1,6 +1,5 @@
 ---
 title: "Learning Projects"
-date: 2025-12-28
 comments: false
 ShowShareButtons: true
 ShowBreadCrumbs: false
