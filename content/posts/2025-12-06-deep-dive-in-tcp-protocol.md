@@ -4,6 +4,9 @@ title: "Deep dive into TCP Protocol"
 date: 2025-12-06
 tags: [tcp, network]
 ShowToc: true
+cover:
+  image: /img/tcp-blog-image.png
+  alt: "Deep dive into TCP Protocol"
 ---
 
 I recently ran into an issue where connections were mysteriously dropping after periods of inactivity. Debugging it required tracing TCP packets through NAT Gateways and Load Balancers, understanding how each component handles idle connections, and figuring out why keep-alive wasn't working as expected. That investigation prompted me to write (or prompt) this post.
