@@ -12,8 +12,7 @@ I believe the best way to learn is by building. This is my running list of proje
 
 ## 🚧 In Progress
 
-1. **gobpftool** — A read-only bpftool alternative written in Go using [cilium/ebpf](https://github.com/cilium/ebpf). Focused on prog and map show utilities for monitoring and debugging.
-2. **go-bore** — TCP tunneling tool in Go, inspired by [bore](https://github.com/ekzhang/bore).
+1. **go-bore** — TCP tunneling tool in Go, inspired by [bore](https://github.com/ekzhang/bore).
 
 ---
 
@@ -21,11 +20,12 @@ I believe the best way to learn is by building. This is my running list of proje
 
 | Project | Links |
 |---------|-------|
+| gobpftool — A read-only bpftool alternative written in Go using cilium/ebpf | [GitHub](https://github.com/viveksb007/gobpftool) |
 | Gvisor Netstack experiments — userspace TCP/IP stack exploration | [GitHub](https://github.com/viveksb007/gvisor-experiment), [Blog Series](/2024/10/gvisor-userspace-tcp-server-client/) |
 | CDNS-Proxy — DNS proxy built on CoreDNS using custom plugin named `intercepter` | [GitHub](https://github.com/viveksb007/cdns-proxy) |
 | Solana Pool Monitor — AMM pool price monitoring via account subscriptions on Solana | [GitHub](https://github.com/viveksb007/solana-pool-monitor), [Blog](/2022/06/amm-reserve-monitoring) |
 | Damn Vulnerable DeFi — solutions to DeFi security challenges (flash loans, oracles, governance, etc.) | [GitHub](https://github.com/viveksb007/damn-vulnerable-defi), [Blog](/2022/01/damn-vulnerable-defi-solutions) |
-| LedgerEntriesCreator: scripts to transform investment platform data into ledger-cli entries | [GitHub](https://github.com/viveksb007/LedgerEntriesCreator), [Blog](/2024/05/moving-tracking-to-paisa) |
+| LedgerEntriesCreator — scripts to transform investment platform data into ledger-cli entries | [GitHub](https://github.com/viveksb007/LedgerEntriesCreator), [Blog](/2024/05/moving-tracking-to-paisa) |
 
 ---
 
