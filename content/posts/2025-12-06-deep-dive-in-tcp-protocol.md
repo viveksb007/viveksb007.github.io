@@ -684,3 +684,7 @@ Understanding TCP at this level helps debug complex networking issues, especiall
 - RST packets are your friend for debugging - they tell you when something went wrong
 
 When troubleshooting TCP issues in cloud environments, always consider the middleboxes in the path and their respective timeout configurations.
+
+---
+
+{{< tweet "viveksb007" "2008025091809202275" >}}
