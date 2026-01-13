@@ -12,7 +12,8 @@ I believe the best way to learn is by building. This is my running list of proje
 
 ## 🚧 In Progress
 
-1. **go-bore** — TCP tunneling tool in Go, inspired by [bore](https://github.com/ekzhang/bore).
+1. **Black Jack** — Casino game with UI similar to actual casino tables + multi-player support.
+2. **bpftool TUI** — built on top of [gobpftool](https://github.com/viveksb007/gobpftool) CLI.
 
 ---
 
@@ -20,6 +21,7 @@ I believe the best way to learn is by building. This is my running list of proje
 
 | Project | Links |
 |---------|-------|
+| go-bore — TCP tunneling tool in Go, inspired by [bore](https://github.com/ekzhang/bore) | [GitHub](https://github.com/viveksb007/go-bore) |
 | gobpftool — A read-only bpftool alternative written in Go using cilium/ebpf | [GitHub](https://github.com/viveksb007/gobpftool) |
 | Gvisor Netstack experiments — userspace TCP/IP stack exploration | [GitHub](https://github.com/viveksb007/gvisor-experiment), [Blog Series](/2024/10/gvisor-userspace-tcp-server-client/) |
 | CDNS-Proxy — DNS proxy built on CoreDNS using custom plugin named `intercepter` | [GitHub](https://github.com/viveksb007/cdns-proxy) |
@@ -58,7 +60,6 @@ Most of these use [Rust Aya](https://aya-rs.dev/) — eBPF development in Rust.
 
 UI similar to actual casino tables + multi-player support. Building these for `research` — gotta understand the odds before next Vegas trip.
 
-1. Black Jack
-2. Craps
-3. Baccarat
-4. Roulette
+1. Craps
+2. Baccarat
+3. Roulette
