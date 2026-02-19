@@ -34,6 +34,8 @@ params:
         buttons:
           - name: Blog
             url: "/archives"
+          - name: Notes
+            url: "/notes"
           - name: Learning
             url: "/learning"
           - name: About
@@ -97,3 +99,4 @@ frontmatter:
 
 permalinks:
   posts: :year/:month/:slug
+  notes: notes/:year/:month/:slug
