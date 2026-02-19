@@ -83,8 +83,8 @@ markup:
         keys: ["title", "permalink", "summary", "content"]
 
 services:
-  disqus:
-    shortname: garageviveksb007
+  # disqus:
+  #   shortname: garageviveksb007
 
 outputs:
   home:
