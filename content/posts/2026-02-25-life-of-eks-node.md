@@ -4,6 +4,9 @@ title: "Life of an EKS Node: From Instance Boot to Ready"
 date: 2026-02-25
 tags: [EKS, Kubernetes, AWS]
 ShowToc: true
+cover:
+  image: /img/life-eks-node.png
+  alt: "Life of an EKS Node: From Instance Boot to Ready"
 ---
 
 If you've ever stared at `kubectl get nodes` waiting for a new node to appear and transition to `Ready`, you've probably wondered — what's actually happening behind the scenes? This post traces the complete lifecycle of an EKS worker node, from the moment an EC2 instance is triggered to the point it starts running your pods.
