@@ -1,0 +1,18 @@
+{{- $user := index .Params 0 -}}
+{{- $id := index .Params 1 -}}
+{{- $file := "" -}}
+{{- if ge (len .Params) 3 -}}
+  {{- $file = index .Params 2 -}}
+{{- end -}}
+
+{{- $src := printf "https://gist.github.com/%s/%s.js" $user $id -}}
+{{- if ne $file "" -}}
+  {{- $src = printf "%s?file=%s" $src (urlquery $file) -}}
+{{- end -}}
+
+<div class="gist-embed">
+  <script src="{{ $src }}"></script>
+  <noscript>
+    <a href="https://gist.github.com/{{ $user }}/{{ $id }}">View gist</a>
+  </noscript>
+</div>
