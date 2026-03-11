@@ -20,9 +20,7 @@ menu:
     #   weight: 30
 
 params:
-    author:
-      name: "Vivek Bhadauria"
-      email: "viveksbhadauria007@gmail.com"
+    author: "Vivek Bhadauria"
     env: production
     defaultTheme: auto
     description: "Personal Website, Blog of Vivek Singh Bhadauria"
