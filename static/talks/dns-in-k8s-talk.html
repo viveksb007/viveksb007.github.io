@@ -1,0 +1,1888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life of a DNS Request in K8s</title>
+
+    <!-- Font: JetBrains Mono from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+
+    <style>
+        /* ===========================================
+           CSS CUSTOM PROPERTIES — TERMINAL GREEN THEME
+           Change these to change the whole look
+           =========================================== */
+        :root {
+            /* Colors — GitHub Dark + Terminal Green */
+            --bg-primary: #0d1117;
+            --bg-card: #161b22;
+            --bg-card-hover: #1c2128;
+            --border: #21262d;
+            --border-bright: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-dim: #484f58;
+            --green: #39d353;
+            --green-dim: rgba(57, 211, 83, 0.15);
+            --green-glow: rgba(57, 211, 83, 0.4);
+            --cyan: #58a6ff;
+            --red: #f85149;
+            --orange: #d29922;
+            --purple: #bc8cff;
+
+            /* Typography — all clamp() */
+            --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+            --title-size: clamp(2rem, 5vw, 4.2rem);
+            --h2-size: clamp(1.4rem, 3.5vw, 2.5rem);
+            --h3-size: clamp(1rem, 2vw, 1.4rem);
+            --body-size: clamp(0.7rem, 1.3vw, 1rem);
+            --small-size: clamp(0.6rem, 0.9vw, 0.8rem);
+            --code-size: clamp(0.6rem, 1.1vw, 0.85rem);
+
+            /* Spacing */
+            --slide-padding: clamp(1.5rem, 4vw, 4rem);
+            --content-gap: clamp(0.75rem, 2vw, 1.5rem);
+            --element-gap: clamp(0.25rem, 1vw, 0.75rem);
+
+            /* Animation */
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --duration-normal: 0.6s;
+        }
+
+        /* ===========================================
+           BASE STYLES
+           =========================================== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* ===========================================
+           VIEWPORT FITTING: MANDATORY BASE STYLES
+           =========================================== */
+        html, body {
+            height: 100%;
+            overflow-x: hidden;
+        }
+        html {
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+        .slide {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            scroll-snap-align: start;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .slide-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            max-height: 100%;
+            overflow: hidden;
+            padding: var(--slide-padding);
+        }
+        img, .image-container {
+            max-width: 100%;
+            max-height: min(50vh, 400px);
+            object-fit: contain;
+        }
+        @media (max-height: 700px) {
+            :root {
+                --slide-padding: clamp(0.75rem, 3vw, 2rem);
+                --content-gap: clamp(0.4rem, 1.5vw, 1rem);
+                --title-size: clamp(1.25rem, 4.5vw, 2.5rem);
+                --h2-size: clamp(1rem, 3vw, 1.75rem);
+            }
+        }
+        @media (max-height: 600px) {
+            :root {
+                --slide-padding: clamp(0.5rem, 2.5vw, 1.5rem);
+                --content-gap: clamp(0.3rem, 1vw, 0.75rem);
+                --title-size: clamp(1.1rem, 4vw, 2rem);
+                --body-size: clamp(0.7rem, 1.2vw, 0.95rem);
+            }
+            .nav-dots, .keyboard-hint, .decorative { display: none; }
+        }
+        @media (max-height: 500px) {
+            :root {
+                --slide-padding: clamp(0.4rem, 2vw, 1rem);
+                --title-size: clamp(1rem, 3.5vw, 1.5rem);
+                --h2-size: clamp(0.9rem, 2.5vw, 1.25rem);
+                --body-size: clamp(0.65rem, 1vw, 0.85rem);
+            }
+        }
+        @media (max-width: 600px) {
+            :root { --title-size: clamp(1.25rem, 7vw, 2.5rem); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.2s !important;
+            }
+            html { scroll-behavior: auto; }
+        }
+
+        /* ===========================================
+           GLOBAL PRESENTATION STYLES
+           =========================================== */
+        body {
+            background: var(--bg-primary);
+            font-family: var(--font-mono);
+            color: var(--text-primary);
+        }
+
+        /* Scan lines overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0,255,100,0.012) 2px,
+                rgba(0,255,100,0.012) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* ===========================================
+           SLIDE BACKGROUNDS & GRID
+           =========================================== */
+        .slide {
+            background: var(--bg-primary);
+        }
+        .slide::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(57,211,83,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(57,211,83,0.03) 1px, transparent 1px);
+            background-size: clamp(30px, 4vw, 50px) clamp(30px, 4vw, 50px);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .slide > * { position: relative; z-index: 1; }
+
+        /* ===========================================
+           PROGRESS BAR
+           =========================================== */
+        .progress-bar {
+            position: fixed;
+            top: 0; left: 0;
+            height: 3px;
+            background: var(--green);
+            box-shadow: 0 0 10px var(--green-glow);
+            z-index: 10000;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* ===========================================
+           NAV DOTS
+           =========================================== */
+        .nav-dots {
+            position: fixed;
+            right: clamp(8px, 1.5vw, 20px);
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: clamp(4px, 0.6vh, 8px);
+            z-index: 9998;
+        }
+        .nav-dot {
+            width: clamp(6px, 0.6vw, 8px);
+            height: clamp(6px, 0.6vw, 8px);
+            border-radius: 50%;
+            background: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            padding: 0;
+        }
+        .nav-dot.active {
+            background: var(--green);
+            box-shadow: 0 0 6px var(--green-glow);
+        }
+        .nav-dot:hover { background: var(--text-secondary); }
+
+        /* ===========================================
+           ANIMATIONS — Reveal on scroll
+           =========================================== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity var(--duration-normal) var(--ease-out-expo),
+                        transform var(--duration-normal) var(--ease-out-expo);
+        }
+        .slide.visible .reveal {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .reveal:nth-child(1) { transition-delay: 0.1s; }
+        .reveal:nth-child(2) { transition-delay: 0.2s; }
+        .reveal:nth-child(3) { transition-delay: 0.3s; }
+        .reveal:nth-child(4) { transition-delay: 0.4s; }
+        .reveal:nth-child(5) { transition-delay: 0.5s; }
+
+        /* Typing effect */
+        @keyframes blink { 50% { opacity: 0; } }
+        .cursor {
+            display: inline-block;
+            width: clamp(8px, 0.8vw, 12px);
+            height: 1.1em;
+            background: var(--green);
+            margin-left: 2px;
+            animation: blink 1s step-end infinite;
+            vertical-align: text-bottom;
+        }
+
+        /* Glow in */
+        @keyframes glowIn {
+            from { opacity: 0; transform: translateY(15px); filter: blur(4px); }
+            to { opacity: 1; transform: translateY(0); filter: blur(0); }
+        }
+
+        /* ===========================================
+           TYPOGRAPHY
+           =========================================== */
+        h1 {
+            font-size: var(--title-size);
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.1;
+        }
+        h2 {
+            font-size: var(--h2-size);
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.15;
+            margin-bottom: var(--content-gap);
+        }
+        h3 {
+            font-size: var(--h3-size);
+            font-weight: 700;
+            color: var(--green);
+            margin-bottom: var(--element-gap);
+        }
+
+        .green { color: var(--green); }
+        .cyan { color: var(--cyan); }
+        .red { color: var(--red); }
+        .orange { color: var(--orange); }
+        .purple { color: var(--purple); }
+        .dim { color: var(--text-dim); }
+        .secondary { color: var(--text-secondary); }
+
+        /* ===========================================
+           SLIDE TYPE: TITLE
+           =========================================== */
+        .title-slide .slide-content {
+            justify-content: center;
+            gap: var(--content-gap);
+        }
+        .title-slide .prompt {
+            font-size: var(--body-size);
+            color: var(--green);
+            opacity: 0.6;
+        }
+        .title-slide h1 .highlight {
+            color: var(--green);
+            text-shadow: 0 0 20px var(--green-glow), 0 0 40px rgba(57,211,83,0.15);
+        }
+        .title-slide .subtitle {
+            font-size: clamp(0.85rem, 1.6vw, 1.3rem);
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+        .title-slide .meta-bar {
+            position: absolute;
+            bottom: var(--slide-padding);
+            left: var(--slide-padding);
+            right: var(--slide-padding);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: var(--small-size);
+            color: var(--text-dim);
+            border-top: 1px solid var(--border);
+            padding-top: var(--element-gap);
+        }
+        .tag {
+            display: inline-block;
+            border: 1px solid var(--border-bright);
+            border-radius: 4px;
+            padding: 1px clamp(4px, 0.5vw, 8px);
+            font-size: var(--small-size);
+            color: var(--text-secondary);
+            margin-left: clamp(4px, 0.3vw, 6px);
+        }
+
+        /* ===========================================
+           SLIDE TYPE: SECTION DIVIDER
+           =========================================== */
+        .section-slide .slide-content {
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .section-number {
+            font-size: clamp(3rem, 8vw, 7rem);
+            font-weight: 700;
+            color: var(--green);
+            opacity: 0.15;
+            line-height: 1;
+            margin-bottom: clamp(-1rem, -2vw, -0.5rem);
+        }
+        .section-slide h2 {
+            font-size: var(--title-size);
+            margin-bottom: 0;
+        }
+        .section-slide .section-desc {
+            font-size: var(--body-size);
+            color: var(--text-secondary);
+            margin-top: var(--element-gap);
+        }
+
+        /* ===========================================
+           SLIDE TYPE: CONTENT
+           =========================================== */
+        .content-slide .slide-content {
+            gap: var(--content-gap);
+        }
+        .bullet-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: var(--element-gap);
+        }
+        .bullet-list li {
+            font-size: var(--body-size);
+            color: var(--text-secondary);
+            line-height: 1.5;
+            padding-left: clamp(16px, 2vw, 28px);
+            position: relative;
+        }
+        .bullet-list li::before {
+            content: '>';
+            position: absolute;
+            left: 0;
+            color: var(--green);
+            font-weight: 700;
+        }
+
+        /* ===========================================
+           SLIDE TYPE: TWO-COLUMN (text + image)
+           =========================================== */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--content-gap);
+            align-items: center;
+            flex: 1;
+        }
+        .two-col.text-heavy {
+            grid-template-columns: 55% 1fr;
+        }
+        .two-col.img-heavy {
+            grid-template-columns: 1fr 55%;
+        }
+        @media (max-width: 800px) {
+            .two-col, .two-col.text-heavy, .two-col.img-heavy {
+                grid-template-columns: 1fr;
+                gap: var(--element-gap);
+            }
+        }
+
+        /* ===========================================
+           IMAGE STYLES
+           =========================================== */
+        .slide-image {
+            max-width: 100%;
+            max-height: min(50vh, 400px);
+            object-fit: contain;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        .slide-image.diagram {
+            max-height: min(60vh, 500px);
+            border: none;
+            border-radius: 6px;
+        }
+        .slide-image.full {
+            max-height: min(65vh, 550px);
+        }
+        .image-slide .slide-content {
+            align-items: center;
+            gap: var(--content-gap);
+        }
+
+        /* ===========================================
+           CODE BLOCK
+           =========================================== */
+        .code-block {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: clamp(12px, 2vw, 24px);
+            font-size: var(--code-size);
+            line-height: 1.6;
+            overflow: hidden;
+            max-height: min(55vh, 450px);
+        }
+        .code-block .line-number {
+            color: var(--text-dim);
+            user-select: none;
+            display: inline-block;
+            width: clamp(20px, 2vw, 30px);
+            text-align: right;
+            margin-right: clamp(8px, 1vw, 16px);
+        }
+        .code-block .keyword { color: var(--red); }
+        .code-block .string { color: var(--cyan); }
+        .code-block .key { color: var(--purple); }
+        .code-block .value { color: var(--green); }
+        .code-block .comment { color: var(--text-dim); font-style: italic; }
+
+        /* ===========================================
+           FEATURE CARDS (for plugins, etc.)
+           =========================================== */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+            gap: var(--content-gap);
+        }
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: clamp(12px, 2vw, 24px);
+        }
+        .feature-card h3 {
+            font-size: var(--body-size);
+            margin-bottom: var(--element-gap);
+        }
+        .feature-card p {
+            font-size: var(--small-size);
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* ===========================================
+           SLIDE HEADER BAR
+           =========================================== */
+        .slide-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--element-gap) var(--slide-padding);
+            border-bottom: 1px solid var(--border);
+            font-size: var(--small-size);
+            color: var(--text-dim);
+            flex-shrink: 0;
+        }
+        .slide-header .slide-num { color: var(--green); }
+        .phase-tag {
+            color: var(--green);
+            font-size: clamp(0.7rem, 1.2vw, 0.95rem);
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            border: 1px solid var(--green);
+            padding: clamp(2px, 0.3vw, 4px) clamp(6px, 0.8vw, 10px);
+            border-radius: 4px;
+            background: rgba(57, 211, 83, 0.08);
+        }
+
+        /* ===========================================
+           INLINE EDITING (opt-in)
+           =========================================== */
+        .edit-hotzone {
+            position: fixed;
+            top: 0; left: 0;
+            width: 80px; height: 80px;
+            z-index: 10000;
+            cursor: pointer;
+        }
+        .edit-toggle {
+            position: fixed;
+            top: 12px; left: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-bright);
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+            font-size: var(--small-size);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 10001;
+        }
+        .edit-toggle.show,
+        .edit-toggle.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .edit-toggle.active {
+            border-color: var(--green);
+            color: var(--green);
+        }
+        [contenteditable="true"] {
+            outline: 1px dashed var(--green-glow);
+            outline-offset: 4px;
+            border-radius: 4px;
+        }
+        .edit-notification {
+            position: fixed;
+            bottom: 20px; left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--bg-card);
+            border: 1px solid var(--green);
+            color: var(--green);
+            font-family: var(--font-mono);
+            font-size: var(--small-size);
+            padding: 8px 16px;
+            border-radius: 6px;
+            z-index: 10002;
+            transition: transform 0.3s var(--ease-out-expo);
+        }
+        .edit-notification.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ===========================================
+           PHASE 1 ANIMATED DIAGRAM (Slide 10)
+           =========================================== */
+        .p1-diagram {
+            display: flex;
+            justify-content: center;
+        }
+        .p1-node-border {
+            border: 1px dashed var(--border-bright);
+            border-radius: 8px;
+            padding: clamp(8px, 1vw, 14px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            width: 100%;
+            max-width: clamp(200px, 30vw, 320px);
+        }
+        .p1-node-title {
+            font-size: var(--small-size);
+            color: var(--text-secondary);
+            font-weight: 700;
+            align-self: flex-start;
+            margin-bottom: clamp(4px, 0.5vh, 8px);
+        }
+        .p1-pod-border {
+            border: 1px dashed var(--cyan);
+            border-radius: 6px;
+            padding: clamp(6px, 0.8vw, 12px);
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+        }
+        .p1-pod-title {
+            font-size: clamp(0.55rem, 0.75vw, 0.65rem);
+            color: var(--cyan);
+            font-weight: 700;
+            align-self: flex-start;
+            margin-bottom: clamp(4px, 0.5vh, 6px);
+        }
+        .p1-box {
+            width: 100%;
+            border-radius: 5px;
+            padding: clamp(4px, 0.6vw, 10px);
+            font-size: clamp(0.5rem, 0.75vw, 0.65rem);
+            color: var(--text-secondary);
+            line-height: 1.45;
+            text-align: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+        }
+        .p1-app { border-left: 3px solid var(--purple); }
+        .p1-libc { border-left: 3px solid var(--cyan); }
+        .p1-udp { border-left: 3px solid var(--green); }
+        .p1-veth { border-left: 3px solid var(--red); }
+        .p1-node-ns { border-left: 3px solid var(--orange); }
+
+        .p1-arrow {
+            color: var(--green);
+            font-size: clamp(0.7rem, 1vw, 1rem);
+            line-height: 1;
+            padding: clamp(2px, 0.3vh, 4px) 0;
+        }
+        .p1-arrow-big {
+            font-size: clamp(0.9rem, 1.2vw, 1.2rem);
+            padding: clamp(3px, 0.4vh, 6px) 0;
+        }
+
+        /* Step reveal for Phase 1 */
+        .p1-step {
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .p1-step.step-active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .p1-box.step-active {
+            animation: boxGlowP1 0.6s ease-out;
+        }
+        @keyframes boxGlowP1 {
+            0% { box-shadow: 0 0 0 rgba(57,211,83,0); }
+            50% { box-shadow: 0 0 12px rgba(57,211,83,0.35); }
+            100% { box-shadow: none; }
+        }
+
+        /* Hint bar */
+        .p1-hint {
+            text-align: center;
+            font-size: var(--small-size);
+            color: var(--text-dim);
+        }
+        .p1-hint .green { opacity: 0.7; }
+
+        /* ===========================================
+           PHASE 2 ANIMATED DIAGRAM (Slide 11)
+           =========================================== */
+        .p2-diagram {
+            display: flex;
+            align-items: flex-end;
+            gap: clamp(4px, 0.6vw, 10px);
+        }
+        .p2-node-border {
+            border: 1px dashed var(--border-bright);
+            border-radius: 8px;
+            padding: clamp(6px, 0.8vw, 12px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            flex: 1;
+        }
+        .p2-node-title {
+            font-size: var(--small-size);
+            color: var(--text-secondary);
+            font-weight: 700;
+            align-self: flex-start;
+            margin-bottom: clamp(4px, 0.5vh, 6px);
+        }
+        .p2-box {
+            width: 90%;
+            border-radius: 5px;
+            padding: clamp(3px, 0.5vw, 8px);
+            font-size: clamp(0.5rem, 0.7vw, 0.6rem);
+            color: var(--text-secondary);
+            line-height: 1.4;
+            text-align: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+        }
+        .p2-packet { border-left: 3px solid var(--orange); }
+        .p2-chain { border-left: 3px solid var(--cyan); }
+        .p2-svc { border-left: 3px solid var(--orange); }
+        .p2-sep { border-left: 3px solid var(--red); width: 100%; }
+        .p2-result { border-left: 3px solid var(--green); }
+        .p2-match {
+            font-size: clamp(0.45rem, 0.6vw, 0.5rem);
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+        .p2-arrow {
+            color: var(--green);
+            font-size: clamp(0.7rem, 0.9vw, 0.9rem);
+            line-height: 1;
+            padding: clamp(1px, 0.2vh, 3px) 0;
+        }
+
+        /* Branch: two endpoint columns side by side */
+        .p2-branch {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: clamp(4px, 0.6vw, 10px);
+            width: 90%;
+            margin-top: clamp(2px, 0.3vh, 4px);
+        }
+        .p2-sep-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: clamp(2px, 0.3vh, 4px);
+        }
+        .p2-branch-label {
+            font-size: clamp(0.45rem, 0.6vw, 0.5rem);
+        }
+        .p2-dnat {
+            font-size: clamp(0.45rem, 0.6vw, 0.5rem);
+            color: var(--text-dim);
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        /* External CoreDNS target */
+        .p2-external {
+            display: flex;
+            align-items: center;
+            gap: clamp(4px, 0.4vw, 8px);
+            align-self: flex-end;
+            margin-bottom: clamp(8px, 1vh, 16px);
+        }
+        .p2-ext-arrow {
+            color: var(--green);
+            font-size: clamp(0.8rem, 1vw, 1rem);
+        }
+        .p2-coredns-target {
+            border-left: 3px solid var(--green);
+            width: auto !important;
+            white-space: nowrap;
+            padding: clamp(4px, 0.5vw, 8px) clamp(6px, 0.8vw, 12px) !important;
+        }
+
+        /* Step reveal for Phase 2 */
+        .p2-step {
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .p2-step.step-active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .p2-box.step-active {
+            animation: boxGlowP1 0.6s ease-out;
+        }
+
+        /* ===========================================
+           PHASE 3 ANIMATED DIAGRAM (Slide 12)
+           Two nodes side by side with crossing arrow
+           =========================================== */
+        .p3-layout {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            grid-template-rows: auto auto;
+            gap: clamp(6px, 1vw, 14px);
+            align-items: start;
+            max-width: min(95vw, 900px);
+            margin: 0 auto;
+            width: 100%;
+        }
+        .p3-node {
+            border: 1px dashed var(--border-bright);
+            border-radius: 8px;
+            padding: clamp(6px, 0.8vw, 12px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+        }
+        .p3-layout > .p3-node:first-child { grid-column: 1; grid-row: 1; }
+        .p3-layout > .p3-external { grid-column: 1; grid-row: 2; }
+        .p3-layout > .p3-crossing { grid-column: 2; grid-row: 1 / 3; }
+        .p3-layout > .p3-node:last-of-type { grid-column: 3; grid-row: 1 / 3; }
+        .p3-node-title {
+            font-size: var(--small-size);
+            color: var(--text-secondary);
+            font-weight: 700;
+            align-self: flex-start;
+            margin-bottom: clamp(4px, 0.5vh, 6px);
+        }
+        .p3-coredns-border {
+            border: 1px solid var(--green);
+            border-radius: 6px;
+            padding: clamp(6px, 0.8vw, 10px);
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            background: rgba(57, 211, 83, 0.03);
+        }
+        .p3-pod-label {
+            font-size: clamp(0.55rem, 0.75vw, 0.65rem);
+            font-weight: 700;
+            align-self: flex-start;
+            margin-bottom: clamp(4px, 0.5vh, 6px);
+        }
+        .p3-box {
+            width: 90%;
+            border-radius: 5px;
+            padding: clamp(3px, 0.5vw, 8px);
+            font-size: clamp(0.5rem, 0.7vw, 0.6rem);
+            color: var(--text-secondary);
+            line-height: 1.4;
+            text-align: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+        }
+        .p3-query { border-left: 3px solid var(--cyan); }
+        .p3-plugin { border-left: 3px solid var(--orange); }
+        .p3-upstream { border-left: 3px solid var(--red); width: 100%; }
+        .p3-external {
+            grid-column: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+        }
+        .p3-conntrack { border-left: 3px solid var(--purple); width: 100%; }
+        .p3-reverse-nat { border-left: 3px solid var(--cyan); width: 100%; }
+        .p3-client-recv { border-left: 3px solid var(--green); width: 100%; }
+        .p3-ct-detail {
+            font-size: clamp(0.4rem, 0.55vw, 0.5rem);
+            color: var(--text-dim);
+            margin-top: 2px;
+            text-align: left;
+            line-height: 1.35;
+        }
+        .p3-arrow {
+            color: var(--green);
+            font-size: clamp(0.7rem, 0.9vw, 0.9rem);
+            line-height: 1;
+            padding: clamp(1px, 0.2vh, 3px) 0;
+        }
+
+        /* Crossing column */
+        .p3-crossing {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(4px, 0.5vh, 8px);
+            align-self: center;
+        }
+        .p3-cross-label {
+            font-size: clamp(0.45rem, 0.6vw, 0.55rem);
+            color: var(--text-dim);
+            text-align: center;
+            line-height: 1.3;
+        }
+        .p3-cross-arrow {
+            color: var(--cyan);
+            font-size: clamp(1rem, 1.5vw, 1.5rem);
+        }
+
+        /* Step reveal for Phase 3 */
+        .p3-step {
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .p3-step.step-active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .p3-box.step-active {
+            animation: boxGlowP1 0.6s ease-out;
+        }
+
+        @media (max-width: 700px) {
+            .p3-layout { grid-template-columns: 1fr; }
+            .p3-layout > .p3-node:first-child,
+            .p3-layout > .p3-external,
+            .p3-layout > .p3-crossing,
+            .p3-layout > .p3-node:last-of-type { grid-column: 1; grid-row: auto; }
+            .p3-crossing { flex-direction: row; }
+        }
+
+        /* ===========================================
+           SLIDE 6: ndots:5 Animated Diagram
+           =========================================== */
+        .s6-layout {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(6px, 1vh, 12px);
+            max-width: min(95vw, 850px);
+            margin: 0 auto;
+            width: 100%;
+        }
+        .s6-example {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: clamp(6px, 0.8vw, 12px);
+            background: var(--bg-card);
+        }
+        .s6-example.s6-green { border-color: rgba(57, 211, 83, 0.3); background: rgba(57, 211, 83, 0.03); }
+        .s6-example.s6-red { border-color: rgba(248, 81, 73, 0.3); background: rgba(248, 81, 73, 0.03); }
+        .s6-header {
+            font-size: clamp(0.6rem, 0.85vw, 0.75rem);
+            font-weight: 700;
+            margin-bottom: clamp(4px, 0.5vh, 8px);
+        }
+        .s6-header .s6-label { color: var(--text-primary); }
+        .s6-header .s6-meta { color: var(--text-dim); font-weight: 400; }
+        .s6-hint {
+            font-size: clamp(0.5rem, 0.65vw, 0.6rem);
+            color: var(--text-dim);
+            margin-bottom: clamp(2px, 0.3vh, 4px);
+            font-style: italic;
+        }
+        .s6-row {
+            display: flex;
+            align-items: center;
+            gap: clamp(4px, 0.5vw, 8px);
+            padding: clamp(2px, 0.3vh, 4px) clamp(4px, 0.5vw, 8px);
+            font-size: clamp(0.5rem, 0.7vw, 0.62rem);
+            font-family: var(--font-mono);
+            border-radius: 4px;
+        }
+        .s6-row:nth-child(even) { background: rgba(255,255,255,0.02); }
+        .s6-num { color: var(--text-dim); min-width: 1.5em; }
+        .s6-domain { color: var(--cyan); flex: 1; }
+        .s6-arrow { color: var(--text-dim); }
+        .s6-result { font-weight: 700; min-width: 6em; text-align: right; }
+        .s6-result.found { color: var(--green); }
+        .s6-result.nxdomain { color: var(--red); }
+        .s6-result.skip { color: var(--text-dim); font-weight: 400; font-style: italic; }
+        .s6-note {
+            font-size: clamp(0.45rem, 0.6vw, 0.55rem);
+            color: var(--orange);
+            margin-top: clamp(2px, 0.3vh, 4px);
+            font-style: italic;
+        }
+
+        /* Step reveal for Slide 6 */
+        .s6-step {
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .s6-step.step-active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+    </style>
+</head>
+<body>
+
+<!-- Progress bar -->
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- Navigation dots -->
+<nav class="nav-dots" id="navDots" aria-label="Slide navigation"></nav>
+
+<!-- Edit mode controls -->
+<div class="edit-hotzone" id="editHotzone"></div>
+<button class="edit-toggle" id="editToggle" title="Edit mode (E)">[ edit ]</button>
+<div class="edit-notification" id="editNotification">saved to localStorage</div>
+
+<!-- ===========================================
+     SLIDE 1: TITLE
+     =========================================== -->
+<section class="slide title-slide" id="slide-1">
+    <div class="slide-content">
+        <div class="prompt reveal">$ nslookup web-service.default.svc.cluster.local</div>
+        <h1 class="reveal">Life of a <span class="highlight">DNS</span> Request<br>in K8s<span class="cursor"></span></h1>
+        <div class="subtitle reveal">From pod to CoreDNS and back</div>
+    </div>
+    <div class="meta-bar reveal">
+        <span><span class="green">Vivek Bhadauria</span> <span style="color: var(--text-secondary);">· Engineer @ AWS EKS</span></span>
+        <span><a href="https://x.com/viveksb007" target="_blank" rel="noopener" style="color: inherit; text-decoration: none; display: inline-flex; align-items: center;"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="margin-right: 3px;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg><span class="green">viveksb007</span></a></span>
+    </div>
+</section>
+
+<!-- ===========================================
+     SLIDE 2: AGENDA
+     =========================================== -->
+<section class="slide content-slide" id="slide-2">
+    <div class="slide-header">
+        <span><span class="slide-num">02</span> / 17</span>
+        <span class="phase-tag">Agenda</span>
+    </div>
+    <div class="slide-content">
+        <h2 class="reveal"><span class="green">$</span> cat agenda.md</h2>
+        <ul class="bullet-list">
+            <li class="reveal">DNS Architecture in K8s</li>
+            <li class="reveal">The Packet Walk <span class="dim">(client to DNS resolver and back)</span></li>
+            <li class="reveal">CoreDNS internals</li>
+        </ul>
+    </div>
+</section>
+
+<!-- ===========================================
+     SLIDE 3: SECTION — DNS Architecture
+     =========================================== -->
+<section class="slide section-slide" id="slide-3">
+    <div class="slide-content">
+        <div class="section-number reveal">01</div>
+        <h2 class="reveal">DNS Architecture<br>in <span class="green">K8s</span></h2>
+        <div class="section-desc reveal">How pods get their DNS configuration</div>
+    </div>
+</section>
+
+<!-- ===========================================
+     SLIDE 4: DNS Infrastructure Overview
+     =========================================== -->
+<section class="slide" id="slide-4">
+    <div class="slide-header">
+        <span><span class="slide-num">04</span> / 17</span>
+        <span class="phase-tag">DNS Architecture</span>
+    </div>
+    <div class="slide-content" style="gap: var(--content-gap);">
+        <h2 class="reveal">DNS Infrastructure Overview</h2>
+        <div class="two-col text-heavy">
+            <div>
+                <ul class="bullet-list">
+                    <li class="reveal">Pod yaml has a field <span class="cyan">"dnsPolicy"</span> which tells kubelet what goes into <span class="cyan">/etc/resolv.conf</span></li>
+                    <li class="reveal"><span class="green">ClusterFirst</span> <span class="dim">(default)</span> — resolv.conf points to kube-dns ClusterIP (CoreDNS)</li>
+                    <li class="reveal"><span class="orange">Default</span> — Pod inherits node's /etc/resolv.conf directly</li>
+                </ul>
+            </div>
+            <div class="reveal" style="text-align:center;">
+                <img src="dns-talk-assets/slide4_img1.png" alt="Kubernetes DNS infrastructure diagram" class="slide-image diagram">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===========================================
+     SLIDE 5: Pod /etc/resolv.conf
+     =========================================== -->
+<section class="slide image-slide" id="slide-5">
+    <div class="slide-header">
+        <span><span class="slide-num">05</span> / 17</span>
+        <span class="phase-tag">resolv.conf</span>
+    </div>
+    <div class="slide-content">
+        <h2 class="reveal"><span class="green">$</span> cat /etc/resolv.conf</h2>
+        <div class="reveal" style="text-align:center;">
+            <img src="dns-talk-assets/slide5_img1.png" alt="Pod resolv.conf contents" class="slide-image" style="max-height: min(35vh, 300px);">
+        </div>
+        <ul class="bullet-list" style="margin-top: var(--element-gap);">
+            <li class="reveal"><span class="green">nameserver</span> points to kube-dns ClusterIP</li>
+            <li class="reveal"><span class="green">search</span> domains enable short names like <span class="cyan">web-service</span></li>
+            <li class="reveal"><span class="orange">ndots:5</span> — resolver tries search domains first if name has &lt; 5 dots</li>
+        </ul>
+    </div>
+</section>
+
+<!-- ===========================================
+     SLIDE 6: ndots:5 Explained (Animated)
+     =========================================== -->
+<section class="slide content-slide" id="slide-6">
+    <div class="slide-header">
+        <span><span class="slide-num">06</span> / 17</span>
+        <span class="phase-tag">ndots:5</span>
+    </div>
+    <div class="slide-content" style="gap: var(--element-gap);">
+        <h2 class="reveal">ndots:5 <span class="secondary">Explained</span></h2>
+
+        <div class="s6-layout">
+            <!-- Example 1: "web-service" (0 dots, < 5) — FOUND quickly -->
+            <div class="s6-example s6-green s6-step" data-step="1">
+                <div class="s6-header">
+                    <span class="s6-label">App resolves: "web-service"</span>
+                    <span class="s6-meta"> — 0 dots, &lt; 5 → try search domains first</span>
+                </div>
+                <div class="s6-row s6-step" data-step="2">
+                    <span class="s6-num">1.</span>
+                    <span class="s6-domain">web-service.default.svc.cluster.local</span>
+                    <span class="s6-arrow">→</span>
+                    <span class="s6-result found">FOUND!</span>
+                </div>
+                <div class="s6-row s6-step" data-step="2">
+                    <span class="s6-num">2.</span>
+                    <span class="s6-domain">web-service.svc.cluster.local</span>
+                    <span class="s6-arrow"></span>
+                    <span class="s6-result skip">(stop here)</span>
+                </div>
+                <div class="s6-row s6-step" data-step="2">
+                    <span class="s6-num">3.</span>
+                    <span class="s6-domain">web-service.cluster.local</span>
+                    <span class="s6-arrow"></span>
+                    <span class="s6-result skip"></span>
+                </div>
+                <div class="s6-row s6-step" data-step="2">
+                    <span class="s6-num">4.</span>
+                    <span class="s6-domain">web-service.us-west-2.compute.internal</span>
+                    <span class="s6-arrow"></span>
+                    <span class="s6-result skip"></span>
+                </div>
+                <div class="s6-row s6-step" data-step="2">
+                    <span class="s6-num">5.</span>
+                    <span class="s6-domain">web-service</span>
+                    <span class="s6-arrow"></span>
+                    <span class="s6-result skip">(as-is)</span>
+                </div>
+                <div class="s6-note s6-step" data-step="2">✓ Resolved in 1 query — efficient!</div>
+            </div>
+
+            <!-- Example 2: "api.example.com" (2 dots, < 5) — many NXDOMAIN -->
+            <div class="s6-example s6-red s6-step" data-step="3">
+                <div class="s6-header">
+                    <span class="s6-label">App resolves: "api.example.com"</span>
+                    <span class="s6-meta"> — 2 dots, &lt; 5 → try search domains first</span>
+                </div>
+                <div class="s6-row s6-step" data-step="4">
+                    <span class="s6-num">1.</span>
+                    <span class="s6-domain">api.example.com.default.svc.cluster.local</span>
+                    <span class="s6-arrow">→</span>
+                    <span class="s6-result nxdomain">NXDOMAIN</span>
+                </div>
+                <div class="s6-row s6-step" data-step="4">
+                    <span class="s6-num">2.</span>
+                    <span class="s6-domain">api.example.com.svc.cluster.local</span>
+                    <span class="s6-arrow">→</span>
+                    <span class="s6-result nxdomain">NXDOMAIN</span>
+                </div>
+                <div class="s6-row s6-step" data-step="4">
+                    <span class="s6-num">3.</span>
+                    <span class="s6-domain">api.example.com.cluster.local</span>
+                    <span class="s6-arrow">→</span>
+                    <span class="s6-result nxdomain">NXDOMAIN</span>
+                </div>
+                <div class="s6-row s6-step" data-step="4">
+                    <span class="s6-num">4.</span>
+                    <span class="s6-domain">api.example.com.us-west-2.compute.internal</span>
+                    <span class="s6-arrow">→</span>
+                    <span class="s6-result nxdomain">NXDOMAIN</span>
+                </div>
+                <div class="s6-row s6-step" data-step="5">
+                    <span class="s6-num">5.</span>
+                    <span class="s6-domain">api.example.com</span>
+                    <span class="s6-arrow">→</span>
+                    <span class="s6-result found">FOUND!</span>
+                </div>
+                <div class="s6-note s6-step" data-step="5">⚠ 4 wasted queries before resolving — ndots:5 penalty!</div>
+            </div>
+
+            <!-- Example 3: "api.example.com." (trailing dot) — skip search -->
+            <div class="s6-example s6-green s6-step" data-step="6">
+                <div class="s6-header">
+                    <span class="s6-label">App resolves: "api.example.com<span class="green">.</span>"</span>
+                    <span class="s6-meta"> — trailing dot = FQDN, skip search domains</span>
+                </div>
+                <div class="s6-row s6-step" data-step="6">
+                    <span class="s6-num">1.</span>
+                    <span class="s6-domain">api.example.com</span>
+                    <span class="s6-arrow">→</span>
+                    <span class="s6-result found">FOUND!</span>
+                </div>
+                <div class="s6-note s6-step" data-step="6">✓ Trailing dot bypasses search domains — 1 query!</div>
+            </div>
+        </div>
+
+        <div class="p1-hint reveal"><span class="green">></span> press arrow / space to step through <span id="s6Counter">(0/6)</span></div>
+    </div>
+</section>
+
+<!-- ===========================================
+     SLIDE 7: Three types of DNS queries
+     =========================================== -->
+<section class="slide content-slide" id="slide-7">
+    <div class="slide-header">
+        <span><span class="slide-num">07</span> / 17</span>
+        <span class="phase-tag">Query Types</span>
+    </div>
+    <div class="slide-content" style="gap: var(--content-gap);">
+        <h2 class="reveal">Three types of <span class="green">DNS</span> queries</h2>
+        <div class="card-grid">
+            <div class="feature-card reveal">
+                <h3>Service Resolution</h3>
+                <p>Same ns: <span class="cyan">web-service</span><br>
+                Cross ns: <span class="cyan">web-service.prod</span><br>
+                FQDN: <span class="cyan">web-service.prod.svc.cluster.local</span><br>
+                <span class="dim">Returns ClusterIP address</span></p>
+            </div>
+            <div class="feature-card reveal">
+                <h3>Pod Resolution</h3>
+                <p>Format: <span class="cyan">&lt;pod-ip-dashed&gt;.&lt;ns&gt;.pod.cluster.local</span><br>
+                Example: <span class="cyan">10-244-1-4.default.pod.cluster.local</span><br>
+                <span class="dim">Returns PodIP address</span></p>
+            </div>
+            <div class="feature-card reveal">
+                <h3>External DNS</h3>
+                <p>CoreDNS proxies to upstream resolvers<br>
+                <span class="dim">VPC+2 for EKS clusters</span><br>
+                <span class="orange">ndots:5 can cause extra lookups!</span></p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===========================================
+     SLIDE 8: SECTION — The Packet Walk
+     =========================================== -->
+<section class="slide section-slide" id="slide-8">
+    <div class="slide-content">
+        <div class="section-number reveal">02</div>
+        <h2 class="reveal">The Packet Walk</h2>
+        <div class="section-desc reveal">Client to DNS Resolver and back</div>
+    </div>
+</section>
+
+<!-- ===========================================
+     SLIDE 9: End-to-End DNS Resolution Flow
+     =========================================== -->
+<section class="slide image-slide" id="slide-9">
+    <div class="slide-header">
+        <span><span class="slide-num">09</span> / 17</span>
+        <span class="phase-tag">E2E Flow</span>
+    </div>
+    <div class="slide-content">
+        <h2 class="reveal">End-to-End <span class="green">DNS</span> Resolution Flow</h2>
+        <div class="reveal" style="text-align:center;">
+            <img src="dns-talk-assets/slide9_img1.png" alt="End-to-end DNS resolution flow diagram" class="slide-image full">
+        </div>
+    </div>
+</section>
+
+<!-- ===========================================
+     SLIDE 10: Phase 1 — From application to wire (Animated)
+     =========================================== -->
+<section class="slide" id="slide-10">
+    <div class="slide-header">
+        <span><span class="slide-num">10</span> / 17</span>
+        <span class="phase-tag">Phase 1</span>
+    </div>
+    <div class="slide-content" style="gap: var(--content-gap);">
+        <h2 class="reveal"><span class="green">Phase 1:</span> From application to wire</h2>
+        <div class="two-col">
+            <!-- Left: text bullets (revealed with matching steps) -->
+            <div>
+                <ul class="bullet-list">
+                    <li class="p1-step" data-step="1">App calls <span class="cyan">getaddrinfo()</span> "web-service"</li>
+                    <li class="p1-step" data-step="2">libc resolver reads <span class="cyan">/etc/resolv.conf</span></li>
+                    <li class="p1-step" data-step="2">Checks /etc/hosts first <span class="dim">(no match)</span></li>
+                    <li class="p1-step" data-step="3">Constructs UDP packet:<br><span class="dim">src=PodIP:random, dst=10.100.0.10:53</span></li>
+                    <li class="p1-step" data-step="4">Packet leaves pod via <span class="green">veth pair</span></li>
+                    <li class="p1-step" data-step="5">Arrives at node's network namespace</li>
+                </ul>
+            </div>
+            <!-- Right: animated flow diagram -->
+            <div class="p1-diagram">
+                <div class="p1-node-border">
+                    <div class="p1-node-title">Node 1 <span class="dim">(Worker)</span></div>
+                    <div class="p1-pod-border p1-step" data-step="1">
+                        <div class="p1-pod-title">Client Pod <span class="dim">(10.244.2.5)</span></div>
+
+                        <div class="p1-box p1-app p1-step" data-step="1">
+                            <span class="purple">App:</span> lookup web-service
+                        </div>
+
+                        <div class="p1-arrow p1-step" data-step="2">↓</div>
+
+                        <div class="p1-box p1-libc p1-step" data-step="2">
+                            <span class="cyan">libc resolver</span><br>
+                            reads /etc/resolv.conf<br>
+                            checks /etc/hosts <span class="dim">(no match)</span>
+                        </div>
+
+                        <div class="p1-arrow p1-step" data-step="3">↓</div>
+
+                        <div class="p1-box p1-udp p1-step" data-step="3">
+                            <span class="green">Construct UDP packet</span><br>
+                            src: 10.244.2.5:random<br>
+                            dst: 10.100.0.10:53
+                        </div>
+                    </div>
+
+                    <div class="p1-arrow p1-arrow-big p1-step" data-step="4">↓</div>
+
+                    <div class="p1-box p1-veth p1-step" data-step="4">
+                        <span class="red">veth pair</span><br>
+                        <span class="dim">pod ns → node ns</span>
+                    </div>
+
+                    <div class="p1-arrow p1-arrow-big p1-step" data-step="5">↓</div>
+
+                    <div class="p1-box p1-node-ns p1-step" data-step="5">
+                        Node 1 network namespace<br>
+                        → <span class="orange">iptables</span> processing
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="p1-hint reveal" id="p1Hint"><span class="green">></span> press arrow / space to step through <span id="p1Counter">(0/5)</span></div>
+    </div>
+</section>
+
+<!-- ===========================================
+     SLIDE 11: Phase 2 — iptables (Animated)
+     =========================================== -->
+<section class="slide" id="slide-11">
+    <div class="slide-header">
+        <span><span class="slide-num">11</span> / 17</span>
+        <span class="phase-tag">Phase 2</span>
+    </div>
+    <div class="slide-content" style="gap: var(--content-gap);">
+        <h2 class="reveal"><span class="green">Phase 2:</span> iptables translates the destination</h2>
+        <div class="two-col">
+            <!-- Left: text bullets -->
+            <div>
+                <ul class="bullet-list">
+                    <li class="p2-step" data-step="1">Packet hits <span class="cyan">PREROUTING</span> -> KUBE-SERVICES chain</li>
+                    <li class="p2-step" data-step="2">Rule matches: <span class="dim">dst=10.100.0.10, port=53</span></li>
+                    <li class="p2-step" data-step="3">Jumps to <span class="cyan">KUBE-SVC-xxx</span> (service chain)</li>
+                    <li class="p2-step" data-step="4">Random probability selects a <span class="cyan">KUBE-SEP-xxx</span> (endpoint)</li>
+                    <li class="p2-step" data-step="4"><span class="green">DNAT</span> rewrites dest: 10.100.0.10 -> 10.244.0.4</li>
+                    <li class="p2-step" data-step="5">Packet routed to actual CoreDNS pod</li>
+                </ul>
+            </div>
+            <!-- Right: animated iptables chain diagram -->
+            <div class="p2-diagram">
+                <div class="p2-node-border">
+                    <div class="p2-node-title">Node 1 <span class="dim">(Worker)</span></div>
+
+                    <!-- Packet arrives -->
+                    <div class="p2-box p2-packet p2-step" data-step="1">
+                        Packet arrives: <span class="orange">dst=10.100.0.10:53</span>
+                    </div>
+                    <div class="p2-arrow p2-step" data-step="1">↓</div>
+
+                    <!-- PREROUTING -->
+                    <div class="p2-box p2-chain p2-step" data-step="1">
+                        <span class="cyan">PREROUTING</span>
+                    </div>
+                    <div class="p2-arrow p2-step" data-step="2">↓</div>
+
+                    <!-- KUBE-SERVICES -->
+                    <div class="p2-box p2-chain p2-step" data-step="2">
+                        <span class="cyan">KUBE-SERVICES</span>
+                        <div class="p2-match">match: -d 10.100.0.10 -p udp --dport 53</div>
+                    </div>
+                    <div class="p2-arrow p2-step" data-step="3">↓</div>
+
+                    <!-- Service chain -->
+                    <div class="p2-box p2-svc p2-step" data-step="3">
+                        <span class="orange">KUBE-SVC-TCOU7JCQXEZGVUNU</span>
+                        <div class="p2-match">kube-dns service chain</div>
+                    </div>
+
+                    <!-- Branch: two SEPs -->
+                    <div class="p2-branch p2-step" data-step="4">
+                        <div class="p2-sep-col">
+                            <div class="p2-branch-label"><span class="green">p=0.50</span></div>
+                            <div class="p2-box p2-sep">
+                                <span class="red">KUBE-SEP-aaa</span>
+                            </div>
+                            <div class="p2-dnat">DNAT to<br><span class="green">10.244.0.4:53</span></div>
+                        </div>
+                        <div class="p2-sep-col">
+                            <div class="p2-branch-label"><span class="dim">remainder</span></div>
+                            <div class="p2-box p2-sep">
+                                <span class="red">KUBE-SEP-bbb</span>
+                            </div>
+                            <div class="p2-dnat">DNAT to<br><span class="dim">10.244.0.5:53</span></div>
+                        </div>
+                    </div>
+
+                    <div class="p2-arrow p2-step" data-step="5">↓</div>
+
+                    <!-- After DNAT result -->
+                    <div class="p2-box p2-result p2-step" data-step="5">
+                        <span class="green">After DNAT:</span> src: 10.244.2.5<br>
+                        dst: <span class="green">10.244.0.4:53</span>
+                    </div>
+                </div>
+
+                <!-- External: CoreDNS pod -->
+                <div class="p2-external p2-step" data-step="5">
+                    <div class="p2-ext-arrow">→</div>
+                    <div class="p2-box p2-coredns-target">
+                        <span class="green">Node 2</span><br>CoreDNS Pod<br><span class="dim">10.244.0.4</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="p1-hint reveal"><span class="green">></span> press arrow / space to step through <span id="p2Counter">(0/5)</span></div>
+    </div>
+</section>
+
+<!-- ===========================================
+     SLIDE 12: Phase 3 — CoreDNS processes (Animated)
+     =========================================== -->
+<section class="slide" id="slide-12">
+    <div class="slide-header">
+        <span><span class="slide-num">12</span> / 17</span>
+        <span class="phase-tag">Phase 3</span>
+    </div>
+    <div class="slide-content" style="gap: var(--element-gap);">
+        <h2 class="reveal"><span class="green">Phase 3:</span> CoreDNS processes & returns</h2>
+
+        <div class="p3-layout">
+            <!-- Node 2: CoreDNS processing -->
+            <div class="p3-node p3-step" data-step="1">
+                <div class="p3-node-title">Node 2 <span class="dim">(Worker)</span></div>
+                <div class="p3-coredns-border">
+                    <div class="p3-pod-label"><span class="green">CoreDNS Pod</span> <span class="dim">(10.244.0.4)</span></div>
+
+                    <div class="p3-box p3-query p3-step" data-step="1">
+                        Query arrives on <span class="cyan">port 53</span>
+                    </div>
+                    <div class="p3-arrow p3-step" data-step="2">↓</div>
+                    <div class="p3-box p3-plugin p3-step" data-step="2">
+                        <span class="orange">cache</span> plugin <span class="dim">(30s TTL)</span>
+                    </div>
+                    <div class="p3-arrow p3-step" data-step="3">↓</div>
+                    <div class="p3-box p3-plugin p3-step" data-step="3">
+                        <span class="orange">kubernetes</span> plugin<br>
+                        <span class="dim">*.cluster.local?</span><br>
+                        YES → resolve via K8s API cache
+                    </div>
+                    <div class="p3-arrow p3-step" data-step="4">↓</div>
+                    <div class="p3-box p3-plugin p3-step" data-step="4">
+                        <span class="orange">forward</span> plugin<br>
+                        forwards to VPC+2
+                    </div>
+                </div>
+            </div>
+
+            <!-- AmazonDNS: outside worker node -->
+            <div class="p3-external p3-step" data-step="4">
+                <div class="p3-arrow">↓</div>
+                <div class="p3-box p3-upstream">
+                    <span class="red">10.0.0.2</span><br>
+                    <span class="dim">VPC+2 upstream (AmazonDNS)</span>
+                </div>
+            </div>
+
+            <!-- Middle: response crosses network -->
+            <div class="p3-crossing p3-step" data-step="5">
+                <div class="p3-cross-label">response crosses<br>VPC network</div>
+                <div class="p3-cross-arrow">→</div>
+            </div>
+
+            <!-- Node 1: Return path -->
+            <div class="p3-node p3-step" data-step="5">
+                <div class="p3-node-title">Node 1 <span class="dim">(Worker)</span></div>
+
+                <div class="p3-box p3-conntrack p3-step" data-step="5">
+                    <span class="purple">conntrack table</span>
+                    <div class="p3-ct-detail">
+                        ORIGINAL: src=10.244.2.5, dst=10.100.0.10:53<br>
+                        REPLY: src=10.244.0.4, dst=10.244.2.5
+                    </div>
+                </div>
+                <div class="p3-arrow p3-step" data-step="6">↓</div>
+                <div class="p3-box p3-reverse-nat p3-step" data-step="6">
+                    <span class="cyan">Reverse NAT</span><br>
+                    src: 10.244.0.4 → <span class="green">10.100.0.10</span> <span class="dim">(svc IP)</span>
+                </div>
+                <div class="p3-arrow p3-step" data-step="7">↓</div>
+                <div class="p3-box p3-client-recv p3-step" data-step="7">
+                    <span class="green">Client Pod receives response</span><br>
+                    from src=10.100.0.10 <span class="dim">(service IP)</span><br>
+                    <span class="dim">Never knows actual CoreDNS pod</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="p1-hint reveal"><span class="green">></span> press arrow / space to step through <span id="p3Counter">(0/7)</span></div>
+    </div>
+</section>
+
+<!-- ===========================================
+     SLIDE 13: SECTION — CoreDNS Internals
+     =========================================== -->
+<section class="slide section-slide" id="slide-13">
+    <div class="slide-content">
+        <div class="section-number reveal">03</div>
+        <h2 class="reveal">CoreDNS <span class="green">Internals</span></h2>
+        <div class="section-desc reveal">Configuration and plugin chain</div>
+    </div>
+</section>
+
+<!-- ===========================================
+     SLIDE 14: The Corefile
+     =========================================== -->
+<section class="slide image-slide" id="slide-14">
+    <div class="slide-header">
+        <span><span class="slide-num">14</span> / 17</span>
+        <span class="phase-tag">Corefile</span>
+    </div>
+    <div class="slide-content">
+        <h2 class="reveal"><span class="green">$</span> kubectl get cm coredns -n kube-system -o yaml</h2>
+        <div class="reveal" style="text-align:center;">
+            <img src="dns-talk-assets/slide14_img1.png" alt="CoreDNS Corefile configuration" class="slide-image full">
+        </div>
+    </div>
+</section>
+
+<!-- ===========================================
+     SLIDE 15: Key CoreDNS Plugins
+     =========================================== -->
+<section class="slide content-slide" id="slide-15">
+    <div class="slide-header">
+        <span><span class="slide-num">15</span> / 17</span>
+        <span class="phase-tag">Plugins</span>
+    </div>
+    <div class="slide-content" style="gap: var(--content-gap);">
+        <h2 class="reveal">Key CoreDNS <span class="green">plugins</span></h2>
+        <div class="card-grid">
+            <div class="feature-card reveal">
+                <h3><span class="cyan">kubernetes</span></h3>
+                <p>Watches <span class="green">Services</span>, <span class="green">Endpoints/EndpointSlices</span>, etc.<br>
+                Maintains a local cache using <span class="green">informers</span>.<br>
+                Resolves <span class="cyan">*.svc.cluster.local</span> names.<br>
+                Returns ClusterIP for service queries.</p>
+            </div>
+            <div class="feature-card reveal">
+                <h3><span class="cyan">forward</span></h3>
+                <p>Proxies queries to upstream DNS.<br>
+                Uses node's /etc/resolv.conf.<br>
+                Handles all external domain lookups.</p>
+            </div>
+            <div class="feature-card reveal">
+                <h3><span class="cyan">cache</span></h3>
+                <p>Default TTL: <span class="green">30 seconds</span>.<br>
+                Reduces repeated plugin chain processing.<br>
+                Reduces load on upstream DNS.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===========================================
+     SLIDE 16: Key Takeaways
+     =========================================== -->
+<section class="slide content-slide" id="slide-16">
+    <div class="slide-header">
+        <span><span class="slide-num">16</span> / 17</span>
+        <span class="phase-tag">Takeaways</span>
+    </div>
+    <div class="slide-content">
+        <h2 class="reveal"><span class="green">$</span> echo "Key Takeaways"</h2>
+        <ul class="bullet-list" style="margin-top: var(--content-gap);">
+            <li class="reveal">Pods send DNS requests to <span class="green">cluster DNS IP</span> which gets translated to an actual CoreDNS Pod IP via iptables DNAT</li>
+            <li class="reveal">CoreDNS answers cluster internal queries <span class="green">authoritatively</span> and forwards external queries to upstream DNS</li>
+            <li class="reveal"><span class="orange">ndots:5</span> means external lookups can generate up to 5 extra queries — use trailing dots or lower ndots for optimization</li>
+        </ul>
+    </div>
+</section>
+
+<!-- ===========================================
+     SLIDE 17: Thank You
+     =========================================== -->
+<section class="slide title-slide" id="slide-17">
+    <div class="slide-content" style="align-items:center; text-align:center;">
+        <h1 class="reveal" style="font-size: var(--title-size);">Thank <span class="highlight">you!</span></h1>
+        <div class="subtitle reveal" style="margin-bottom: var(--content-gap);">Feedback for presentation</div>
+        <div class="reveal" style="text-align:center;">
+            <img src="dns-talk-assets/slide21_img1.png" alt="Feedback QR Code" class="slide-image" style="max-height: min(40vh, 300px); border-radius: 12px; border: 2px solid var(--border-bright);">
+        </div>
+    </div>
+    <div class="meta-bar reveal">
+        <span><span class="green">Vivek Bhadauria</span> <span style="color: var(--text-secondary);">· Engineer @ AWS EKS</span></span>
+        <span><a href="https://x.com/viveksb007" target="_blank" rel="noopener" style="color: inherit; text-decoration: none; display: inline-flex; align-items: center;"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="margin-right: 3px;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg><span class="green">viveksb007</span></a></span>
+    </div>
+</section>
+
+<script>
+/* ===========================================
+   SLIDE PRESENTATION CONTROLLER
+   =========================================== */
+class SlidePresentation {
+    constructor() {
+        this.slides = document.querySelectorAll('.slide');
+        this.currentSlide = 0;
+        this.isScrolling = false;
+        this.setupSubsteps();
+        this.setupIntersectionObserver();
+        this.setupKeyboardNav();
+        this.setupTouchNav();
+        this.setupProgressBar();
+        this.setupNavDots();
+        this.setupScrollNav();
+    }
+
+    /* ===========================================
+       SUBSTEP SYSTEM — click-to-reveal within slides
+       Works for any slide containing [data-step] elements
+       (class prefix like p1-step, e2e-step, etc.)
+       =========================================== */
+    setupSubsteps() {
+        this.substepState = {};
+        this.slides.forEach((slide, i) => {
+            const steps = slide.querySelectorAll('[data-step]');
+            if (steps.length === 0) return;
+            const maxStep = Math.max(...Array.from(steps).map(s => parseInt(s.dataset.step)));
+            /* Find the counter element inside this slide */
+            const counter = slide.querySelector('[id$="Counter"]');
+            this.substepState[i] = { total: maxStep, current: 0, counter };
+        });
+    }
+
+    advanceSubstep() {
+        const state = this.substepState[this.currentSlide];
+        if (!state || state.current >= state.total) return false;
+        state.current++;
+        this.applySubstepVisibility(this.currentSlide);
+        return true;
+    }
+
+    rewindSubstep() {
+        const state = this.substepState[this.currentSlide];
+        if (!state || state.current <= 0) return false;
+        state.current--;
+        this.applySubstepVisibility(this.currentSlide);
+        return true;
+    }
+
+    applySubstepVisibility(slideIndex) {
+        const state = this.substepState[slideIndex];
+        if (!state) return;
+        const slide = this.slides[slideIndex];
+        slide.querySelectorAll('[data-step]').forEach(el => {
+            const step = parseInt(el.dataset.step);
+            el.classList.toggle('step-active', step <= state.current);
+        });
+        if (state.counter) {
+            state.counter.textContent = `(${state.current}/${state.total})`;
+        }
+    }
+
+    resetSubsteps(slideIndex) {
+        const state = this.substepState[slideIndex];
+        if (!state) return;
+        state.current = 0;
+        this.applySubstepVisibility(slideIndex);
+    }
+
+    next() {
+        if (this.advanceSubstep()) return;
+        const prev = this.currentSlide;
+        this.goToSlide(this.currentSlide + 1);
+        if (prev !== this.currentSlide) this.resetSubsteps(prev);
+    }
+
+    prev() {
+        if (this.rewindSubstep()) return;
+        const prev = this.currentSlide;
+        this.goToSlide(this.currentSlide - 1);
+        if (prev !== this.currentSlide) this.resetSubsteps(prev);
+    }
+
+    /* Intersection Observer — triggers .visible class for animations */
+    setupIntersectionObserver() {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    const index = Array.from(this.slides).indexOf(entry.target);
+                    if (index !== -1) {
+                        this.currentSlide = index;
+                        this.updateProgressBar();
+                        this.updateNavDots();
+                    }
+                }
+            });
+        }, { threshold: 0.5 });
+
+        this.slides.forEach(slide => observer.observe(slide));
+    }
+
+    /* Keyboard: arrows, space, page up/down */
+    setupKeyboardNav() {
+        document.addEventListener('keydown', (e) => {
+            if (e.target.getAttribute('contenteditable')) return;
+            switch(e.key) {
+                case 'ArrowDown':
+                case 'ArrowRight':
+                case ' ':
+                case 'PageDown':
+                    e.preventDefault();
+                    this.next();
+                    break;
+                case 'ArrowUp':
+                case 'ArrowLeft':
+                case 'PageUp':
+                    e.preventDefault();
+                    this.prev();
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    this.goToSlide(0);
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    this.goToSlide(this.slides.length - 1);
+                    break;
+                case 'f':
+                case 'F':
+                    if (!document.fullscreenElement) {
+                        document.documentElement.requestFullscreen();
+                    } else {
+                        document.exitFullscreen();
+                    }
+                    break;
+            }
+        });
+    }
+
+    /* Touch/swipe support */
+    setupTouchNav() {
+        let startY = 0;
+        document.addEventListener('touchstart', (e) => { startY = e.touches[0].clientY; }, { passive: true });
+        document.addEventListener('touchend', (e) => {
+            const diff = startY - e.changedTouches[0].clientY;
+            if (Math.abs(diff) > 50) {
+                diff > 0 ? this.next() : this.prev();
+            }
+        }, { passive: true });
+    }
+
+    /* Mouse wheel with debounce */
+    setupScrollNav() {
+        let lastScroll = 0;
+        document.addEventListener('wheel', (e) => {
+            const now = Date.now();
+            if (now - lastScroll < 800) return;
+            lastScroll = now;
+            if (e.deltaY > 0) this.next();
+            else if (e.deltaY < 0) this.prev();
+        }, { passive: true });
+    }
+
+    /* Navigate to a slide */
+    goToSlide(index) {
+        if (index < 0 || index >= this.slides.length) return;
+        const prev = this.currentSlide;
+        this.currentSlide = index;
+        this.slides[index].scrollIntoView({ behavior: 'smooth' });
+        this.updateProgressBar();
+        this.updateNavDots();
+        if (prev !== index) this.resetSubsteps(prev);
+    }
+
+    /* Progress bar */
+    setupProgressBar() {
+        this.progressBar = document.getElementById('progressBar');
+        this.updateProgressBar();
+    }
+    updateProgressBar() {
+        const progress = ((this.currentSlide + 1) / this.slides.length) * 100;
+        this.progressBar.style.width = progress + '%';
+    }
+
+    /* Navigation dots */
+    setupNavDots() {
+        const container = document.getElementById('navDots');
+        this.slides.forEach((_, i) => {
+            const dot = document.createElement('button');
+            dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+            dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
+            dot.addEventListener('click', () => this.goToSlide(i));
+            container.appendChild(dot);
+        });
+        this.dots = container.querySelectorAll('.nav-dot');
+    }
+    updateNavDots() {
+        this.dots.forEach((dot, i) => {
+            dot.classList.toggle('active', i === this.currentSlide);
+        });
+    }
+}
+
+/* ===========================================
+   INLINE EDITOR (opt-in)
+   =========================================== */
+class InlineEditor {
+    constructor() {
+        this.isActive = false;
+        this.editToggle = document.getElementById('editToggle');
+        this.notification = document.getElementById('editNotification');
+        this.editableSelectors = 'h1, h2, h3, p, li, .subtitle, .prompt, .section-desc';
+        this.setupHotzone();
+        this.setupKeyboardShortcut();
+        this.loadFromStorage();
+    }
+
+    setupHotzone() {
+        const hotzone = document.getElementById('editHotzone');
+        let hideTimeout = null;
+
+        hotzone.addEventListener('mouseenter', () => {
+            clearTimeout(hideTimeout);
+            this.editToggle.classList.add('show');
+        });
+        hotzone.addEventListener('mouseleave', () => {
+            hideTimeout = setTimeout(() => {
+                if (!this.isActive) this.editToggle.classList.remove('show');
+            }, 400);
+        });
+        this.editToggle.addEventListener('mouseenter', () => { clearTimeout(hideTimeout); });
+        this.editToggle.addEventListener('mouseleave', () => {
+            hideTimeout = setTimeout(() => {
+                if (!this.isActive) this.editToggle.classList.remove('show');
+            }, 400);
+        });
+        hotzone.addEventListener('click', () => this.toggleEditMode());
+        this.editToggle.addEventListener('click', () => this.toggleEditMode());
+    }
+
+    setupKeyboardShortcut() {
+        document.addEventListener('keydown', (e) => {
+            if ((e.key === 'e' || e.key === 'E') && !e.target.getAttribute('contenteditable')) {
+                this.toggleEditMode();
+            }
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                this.saveToStorage();
+                this.showNotification('saved to localStorage');
+            }
+        });
+    }
+
+    toggleEditMode() {
+        this.isActive = !this.isActive;
+        this.editToggle.classList.toggle('active', this.isActive);
+        this.editToggle.textContent = this.isActive ? '[ editing ]' : '[ edit ]';
+        document.querySelectorAll(this.editableSelectors).forEach(el => {
+            el.contentEditable = this.isActive ? 'true' : 'false';
+        });
+        if (!this.isActive) {
+            this.saveToStorage();
+            this.showNotification('saved to localStorage');
+        }
+    }
+
+    saveToStorage() {
+        const data = {};
+        document.querySelectorAll('.slide').forEach((slide, i) => {
+            data[`slide-${i}`] = slide.innerHTML;
+        });
+        localStorage.setItem('dns-k8s-talk-edits', JSON.stringify(data));
+    }
+
+    loadFromStorage() {
+        const raw = localStorage.getItem('dns-k8s-talk-edits');
+        if (!raw) return;
+        try {
+            const data = JSON.parse(raw);
+            document.querySelectorAll('.slide').forEach((slide, i) => {
+                if (data[`slide-${i}`]) slide.innerHTML = data[`slide-${i}`];
+            });
+        } catch(e) { /* ignore corrupt data */ }
+    }
+
+    showNotification(msg) {
+        this.notification.textContent = msg;
+        this.notification.classList.add('show');
+        setTimeout(() => this.notification.classList.remove('show'), 2000);
+    }
+}
+
+/* Initialize */
+const presentation = new SlidePresentation();
+const editor = new InlineEditor();
+</script>
+</body>
+</html>

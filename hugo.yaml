@@ -12,6 +12,9 @@ menu:
     #   name: Archives
     #   url: /archives/
     #   weight: 10
+    - name: Talks
+      url: /talks/
+      weight: 15
     - name: Search
       url: /search/
       weight: 20
