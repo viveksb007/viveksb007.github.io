@@ -40,7 +40,7 @@ params:
             url: "/archives"
           - name: Notes
             url: "/notes"
-          - name: Learning
+          - name: Projects
             url: "/learning"
           - name: About
             url : "/about"
