@@ -108,21 +108,22 @@ I believe the best way to learn is by building. This page tracks what I've built
 
 <div class="projects-section-title">In Progress</div>
 
+<div class="projects-section-title">Built</div>
+
 <div class="project-item">
   <div class="project-header">
     <span class="project-name">Black Jack</span>
-    <span class="project-status">building</span>
   </div>
   <div class="project-pills">
     <span class="project-pill">Game</span>
-    <span class="project-pill">Multiplayer</span>
   </div>
   <div class="project-desc">
-    Casino game with UI similar to actual casino tables + multi-player support.
+    A single-deck casino blackjack game with a live win-probability panel.
+  </div>
+  <div class="project-links">
+    <a href="https://the-mechanlc.github.io/blackjack/">Play</a>
   </div>
 </div>
-
-<div class="projects-section-title">Built</div>
 
 <div class="project-item">
   <div class="project-header">
