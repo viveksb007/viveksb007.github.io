@@ -84,6 +84,8 @@ Every check the verifier makes — is this pointer non-null, is this offset in
 bounds, is this argument the right type — reads straight off these columns. It
 never looks at a single byte of real data.
 
+{{< figure src="/img/bpf-verifier-register-state.png" alt="Register state after each instruction" caption="What the verifier tracks after each instruction" >}}
+
 Let's make "read N bytes at a pointer" concrete. Say `r1` points at the start of
 a map value that is **8 bytes** long — so the only legal bytes are positions
 `0,1,2,...,7`. A read of *width* W at *offset* O touches bytes `O` through
@@ -226,6 +228,8 @@ and reaches the same join with `a = 20`.
   different states (`a = 10` vs `a = 20`), they don't match, and the verifier
   must walk all 50 **again** for the second value.
 
+{{< figure src="/img/bpf-verifier-state-pruning-join.png" alt="State pruning at a join point" caption="Pruned when a is dead, re-walked when it is live" >}}
+
 Same code, double the work, purely because a value stayed relevant across the
 join. Two consequences fall out of this, and they explain almost everything
 about verifier performance:
@@ -311,6 +315,8 @@ Same program. One is rejected for being "too large" at 38 instructions; the
 other sails through. The difference is **entirely** about how much the verifier
 had to walk.
 
+{{< figure src="/img/bpf-verifier-results.png" alt="always_inline vs __noinline verifier results" caption="Same source, two builds (kernel 5.10)" >}}
+
 ### Why inline explodes
 
 When `walk` is inlined, its inner loop is stamped directly into the outer loop's
@@ -371,6 +377,8 @@ processed  ≈  (inner loop verified once)  +  OUTER × small_constant
 
 That is why the count drops from over a million to under seven thousand, with no
 change to what the program computes.
+
+{{< figure src="/img/bpf-verifier-inline-vs-noinline.png" alt="Inner loop entry state: inline vs noinline" caption="Why inlining blows the 1M complexity limit" >}}
 
 This is not a contrived demo. The same pattern — a loop-heavy helper that had to
 become a `__noinline` subprogram before a real program would stop being rejected
