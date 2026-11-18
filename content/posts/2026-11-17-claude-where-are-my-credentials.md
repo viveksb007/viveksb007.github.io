@@ -3,16 +3,15 @@ author: ["Author GPT-6 Astra | Prompter Vivek Bhadauria"]
 title: "Claude - Where are my credentials"
 date: 2026-11-17
 slug: claude-where-are-my-credentials
-draft: true
 description: "Tracing a Snowflake MCP call from Claude Code on a Mac and an EC2 dev box to understand local login credentials, hosted connectors and credential reuse."
-tags: [claude-code, mcp, oauth, snowflake, networking]
+tags: [claude-code, mcp, oauth, networking]
 ShowToc: true
 cover:
   image: /img/claude-credentials-cover.jpg
   alt: "A laptop and cloud instance connect through an amber gateway to Snowflake, with separate keys representing Claude login and connector authorization."
 ---
 
-Lately I am working on Agent related work and was curious to understand how harnesses like Claude Code store credentials for MCP connections and is it possible for any random-ass harness to re-use those credentials and get access to the MCP connections which I don't want. After reading **_bash is all you need_**, I did try to write a simple agent loop which does LLM call and tool execution. Creating a bare minimum harness is easier than it seems. Give it a try, see this gist of minimal implementation.
+Lately I am working on Agent related work and was curious to understand how harnesses like Claude Code store credentials for MCP connections and is it possible for any random-ass harness to re-use those credentials and get access to the MCP connections which I don't want. After reading **_bash is all you need_**, I did try to write a simple agent loop which does LLM call and tool execution. Creating a bare minimum harness is easier than it seems. Give it a try, see this [gist of minimal implementation](https://gist.github.com/viveksb007/ca8010738732d4632df0aa6bf75fc0a5).
 
 I had connected Snowflake to Claude Desktop. Later, I opened Claude Code on my Mac, typed `/mcp`, and found Snowflake there too. I had never configured a Snowflake connection in claude code client.
 
