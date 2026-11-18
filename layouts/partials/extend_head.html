@@ -11,53 +11,11 @@
         overflow-x: auto;
     }
 
-    /* Light theme (default) */
-    html:not(.dark) .mermaid .flowchart-link {
-        stroke: #333 !important;
-        stroke-width: 2px !important;
-    }
-
-    /* Dark theme */
-    html.dark .mermaid .flowchart-link,
-    .dark .mermaid .flowchart-link {
-        stroke: #ddd !important;
-        stroke-width: 2px !important;
-    }
-
-    /* Ensure text is visible in both themes */
-    html.dark .mermaid .nodeLabel,
-    .dark .mermaid .nodeLabel {
-        color: #ddd !important;
-        fill: #ddd !important;
-    }
-
-    html:not(.dark) .mermaid .nodeLabel {
-        color: #333 !important;
-        fill: #333 !important;
-    }
-
-    /* Ensure edges (arrows) are visible in both themes */
-    html.dark .mermaid .marker,
-    .dark .mermaid .marker {
-        fill: #ddd !important;
-        stroke: #ddd !important;
-    }
-
-    html:not(.dark) .mermaid .marker {
-        fill: #333 !important;
-        stroke: #333 !important;
-    }
-
-    /* Ensure arrowheads are visible */
-    html.dark .mermaid .arrowheadPath,
-    .dark .mermaid .arrowheadPath {
-        fill: #ddd !important;
-        stroke: #ddd !important;
-    }
-
-    html:not(.dark) .mermaid .arrowheadPath {
-        fill: #333 !important;
-        stroke: #333 !important;
+    .mermaid svg {
+        display: block;
+        margin: 0 auto;
+        max-width: 100%;
+        height: auto;
     }
 </style>
 

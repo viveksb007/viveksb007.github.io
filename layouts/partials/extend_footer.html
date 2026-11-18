@@ -3,58 +3,8 @@
 
 <!-- Mermaid JavaScript -->
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+<script src="{{ "js/mermaid-theme.js" | relURL }}"></script>
 <script>
-    // Function to detect dark mode
-    function isDarkTheme() {
-        // Check if the body or html element has a dark mode class or data attribute
-        // This depends on how your Hugo theme implements dark mode
-        return document.documentElement.classList.contains('dark') ||
-            document.body.classList.contains('dark') ||
-            document.documentElement.getAttribute('data-theme') === 'dark' ||
-            window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    }
-
-    // Initialize Mermaid with theme detection
-    function initMermaid() {
-        const theme = isDarkTheme() ? 'dark' : 'default';
-        mermaid.initialize({
-            startOnLoad: true,
-            theme: theme,
-            securityLevel: 'loose',
-            flowchart: {
-                useMaxWidth: true,
-                htmlLabels: true,
-                curve: 'basis'
-            }
-        });
-    }
-
-    // Initialize Mermaid
-    initMermaid();
-
-    // Re-initialize Mermaid when theme changes
-    // This handles theme toggle buttons
-    const observer = new MutationObserver(function (mutations) {
-        mutations.forEach(function (mutation) {
-            if (mutation.attributeName === 'class' || mutation.attributeName === 'data-theme') {
-                initMermaid();
-            }
-        });
-    });
-
-    // Observe the document for theme changes
-    observer.observe(document.documentElement, {
-        attributes: true
-    });
-    observer.observe(document.body, {
-        attributes: true
-    });
-
-    // Also listen for system preference changes
-    if (window.matchMedia) {
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', initMermaid);
-    }
-
     // Zooming.js initialization
     document.addEventListener('DOMContentLoaded', function () {
         // Initialize zooming for all images in post content
